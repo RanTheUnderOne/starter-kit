@@ -25,14 +25,18 @@ export function ChatView() {
     requestComposerFocus,
     startNewChat,
     onSessionCreated,
+    registerRunKiller,
     bumpSession,
   } = useChatContext();
-  const { messages, isStreaming, loadingHistory, error, send, stop } = useChat({
+  const { messages, isStreaming, loadingHistory, error, send, stop, killRun } = useChat({
     agentId,
     sessionId: activeSessionId,
     onSessionCreated,
     onActivity: bumpSession,
   });
+
+  // Deleting a thread from the rail must also stop any turn still streaming on it.
+  useEffect(() => registerRunKiller(killRun), [registerRunKiller, killRun]);
 
   // Attachment state lives here (not in the composer) so the ENTIRE pane is a drop zone — a file
   // dropped anywhere over the transcript or composer lands in the same tray. A landed attachment

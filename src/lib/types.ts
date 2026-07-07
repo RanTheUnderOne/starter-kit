@@ -155,6 +155,10 @@ export interface ModelsResponse {
   data: AgentModel[];
 }
 
+// The input the chat BFF substitutes for a files-only turn (the Agents API requires a non-empty
+// `input`). Shared with the client so it can match the turn against the stored transcript.
+export const FILES_ONLY_PROMPT = "Please review the attached file(s).";
+
 // One message in a conversation's history (GET /v1/sessions/{id}).
 export interface ChatHistoryMessage {
   id: string;

@@ -1,6 +1,7 @@
 import { instanceFetch } from "@/lib/agent37";
 import { requireAgentAccess } from "@/lib/auth";
 import { ApiError, handleError, readJson } from "@/lib/http";
+import { FILES_ONLY_PROMPT } from "@/lib/types";
 import { upstreamErrorMessage } from "../../_helpers";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -31,7 +32,7 @@ export async function POST(request: Request, { params }: Ctx) {
     }
     // The Agents API marks `input` required; for a files-only turn supply a sensible default
     // prompt so we always send a non-empty input rather than relying on "" being accepted.
-    const finalInput = input || "Please review the attached file(s).";
+    const finalInput = input || FILES_ONLY_PROMPT;
 
     // Forward only what the Agents API expects; omit null/empty so the agent's own defaults
     // apply (model/provider/effort). provider only rides along when a model is chosen.

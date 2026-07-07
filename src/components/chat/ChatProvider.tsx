@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import type { MergedAgent } from "@/lib/types";
@@ -21,7 +21,12 @@ interface ChatContextValue {
   loadingSessions: boolean;
   selectSession: (sessionId: string | null) => void;
   startNewChat: () => void;
-  onSessionCreated: (sessionId: string, title: string) => void;
+  // `promote: false` records the rail row without opening the thread — used when a backgrounded
+  // run mints its session after the user has already moved on.
+  onSessionCreated: (sessionId: string, title: string, opts?: { promote?: boolean }) => void;
+  // The conversation pane registers its run-killer here so deleting a thread also stops any turn
+  // still streaming on it (locally and upstream).
+  registerRunKiller: (fn: (sessionId: string) => void) => () => void;
   deleteSession: (sessionId: string) => Promise<void>;
   // Rename a thread (server-side via PATCH). Optimistic; rolls back + toasts if the build
   // doesn't support titles. Resolves whether it succeeded so callers can react if needed.
@@ -135,12 +140,13 @@ export function ChatProvider({
 
   // A brand-new conversation just minted its session id mid-stream. We already have its first
   // message (the label), so add the rail row locally and promote it — no write-back: the session
-  // already exists upstream and will reappear from GET /v1/sessions on the next load.
+  // already exists upstream and will reappear from GET /v1/sessions on the next load. A run that
+  // finished creating in the background (promote: false) only gets its rail row.
   const onSessionCreated = useCallback(
-    (sessionId: string, title: string) => {
+    (sessionId: string, title: string, opts?: { promote?: boolean }) => {
       // Give the freshly-minted thread its own URL (replace, so Back doesn't return to the blank
       // new-chat URL); off-tab it's adopted silently.
-      setOpenThread(sessionId, "replace");
+      if (opts?.promote !== false) setOpenThread(sessionId, "replace");
       setSessions((prev) =>
         prev.some((s) => s.session_id === sessionId)
           ? prev
@@ -150,10 +156,21 @@ export function ChatProvider({
     [setOpenThread]
   );
 
+  // The conversation pane's run-killer (deleting a thread must also stop any turn still
+  // streaming on it). A ref, not state — registration shouldn't re-render the tree.
+  const runKillerRef = useRef<((sessionId: string) => void) | null>(null);
+  const registerRunKiller = useCallback((fn: (sessionId: string) => void) => {
+    runKillerRef.current = fn;
+    return () => {
+      if (runKillerRef.current === fn) runKillerRef.current = null;
+    };
+  }, []);
+
   const deleteSession = useCallback(
     async (sessionId: string) => {
       const removed = sessions.find((x) => x.session_id === sessionId);
       const wasActive = activeSessionId === sessionId;
+      runKillerRef.current?.(sessionId); // stop any in-flight turn before the thread disappears
       setSessions((s) => s.filter((x) => x.session_id !== sessionId)); // optimistic, functional
       // Deleting the open thread falls back to a new chat (the rail can delete the active thread
       // from any tab, so off-tab this stays silent rather than yanking the user's URL).
@@ -213,11 +230,12 @@ export function ChatProvider({
       selectSession,
       startNewChat,
       onSessionCreated,
+      registerRunKiller,
       deleteSession,
       renameSession,
       bumpSession,
     }),
-    [agentId, agents, sessions, activeSessionId, onChatTab, composerFocusToken, requestComposerFocus, loadingSessions, selectSession, startNewChat, onSessionCreated, deleteSession, renameSession, bumpSession]
+    [agentId, agents, sessions, activeSessionId, onChatTab, composerFocusToken, requestComposerFocus, loadingSessions, selectSession, startNewChat, onSessionCreated, registerRunKiller, deleteSession, renameSession, bumpSession]
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
