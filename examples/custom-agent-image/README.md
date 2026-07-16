@@ -67,7 +67,7 @@ It lives on the persistent volume, so it survives restarts. Then [message the in
 Four rules keep a custom image runnable:
 
 1. **The image must be `linux/amd64`.** Cloud builds and the bundled GitHub Action both take care of this.
-2. **Keep the image at most 5 GB.**
+2. **Keep the image at most 8 GB.**
 3. **Bake outside `/home`.** `/home/node` and `/home/linuxbrew` are persistent volumes that mask anything baked there at build time. Binaries → `/usr/local/bin`, skills → `/usr/local/share/agent37/default-skills/`, other assets → `/opt`.
 4. **Keep the base `ENTRYPOINT`.** It starts Hermes and the gateway that serves the chat API.
 

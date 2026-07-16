@@ -13,7 +13,7 @@
 # The contract (keep these or the image won't run):
 #   - the image must be linux/amd64  (`npm run release:agent` handles this in both
 #     modes: public builds pass --platform, private cloud builds run on amd64)
-#   - keep the image at most 5 GB
+#   - keep the image at most 8 GB
 #   - bake into /usr/local or /opt, never /home/node or /home/linuxbrew
 #     (both are persistent volumes that mask anything baked there at runtime)
 #   - keep the base ENTRYPOINT (it starts Hermes + the gateway that serves chat)
