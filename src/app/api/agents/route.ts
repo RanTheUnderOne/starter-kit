@@ -1,6 +1,6 @@
 import { agent37 } from "@/lib/agent37";
 import { requireAdmin, requireMember, requireUser } from "@/lib/auth";
-import { AGENT_TEMPLATES, DEFAULT_AGENT } from "@/config/agents";
+import { AGENT_TEMPLATES, DEFAULT_AGENT, templateAppPorts } from "@/config/agents";
 import { usdToMicros } from "@/lib/format";
 import { ApiError, handleError, json, readJson } from "@/lib/http";
 import type { Agent, AgentRow, MergedAgent, Template } from "@/lib/types";
@@ -77,7 +77,14 @@ export async function GET(request: Request) {
         live_status: l?.status ?? row.status,
         status_reason: l?.status_reason ?? null,
         past_due: l?.past_due ?? false,
-        ports: l?.ports ?? [],
+        ports:
+          l?.ports?.length
+            ? l.ports
+            : templateAppPorts(l?.template ?? row.template).map((port) => ({
+                port,
+                default: false,
+                url: `https://${row.agent37_id}-${port}.agent37.app`,
+              })),
         update_available: !!(l?.image_ref && latestImage && l.image_ref !== latestImage),
       };
     });

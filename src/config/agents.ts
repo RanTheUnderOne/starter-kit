@@ -52,13 +52,21 @@ export const AGENT_TYPES: AgentTypeOption[] = [
 
 export const AGENT_TEMPLATES = AGENT_TYPES.map((a) => a.template);
 
-// Labels for the "open in new tab" buttons. Ports come from the live instance
-// (instance.ports), never this map — this only prettifies the ports the stock
-// Hermes/OpenClaw images serve; any other port falls back to "Port {n}", which is
-// what a custom image's own ports get until you add them here.
+// Labels for the "open in new tab" buttons; any port not listed here falls back
+// to "Port {n}".
 export const PORT_LABELS: Record<number, string> = {
   9119: "Dashboard",
   7681: "Terminal",
   8080: "Files",
   18789: "OpenClaw",
 };
+
+// The web-app ports each stock image serves (docs/agents-api/urls). The API no
+// longer reports per-instance ports — every port is reachable at a preview URL,
+// nothing is declared — so the openable set is derived from the template. Custom
+// images build on the Hermes base, so unknown templates get the Hermes set.
+const HERMES_APP_PORTS = [9119, 7681, 8080];
+const OPENCLAW_APP_PORTS = [18789, 7681, 8080];
+export function templateAppPorts(template?: string | null): number[] {
+  return template === "agent37-openclaw" ? OPENCLAW_APP_PORTS : HERMES_APP_PORTS;
+}

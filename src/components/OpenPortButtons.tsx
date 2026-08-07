@@ -53,7 +53,7 @@ export function OpenPortButtons({
   className,
 }: {
   agentId: string;
-  ports: Agent["ports"];
+  ports: NonNullable<Agent["ports"]>;
   disabled?: boolean;
   // The agent's template, used to name its dashboard port after the agent type.
   template?: string | null;

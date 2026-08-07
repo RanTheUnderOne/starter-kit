@@ -51,7 +51,9 @@ export interface Agent {
   template: string;
   image_ref: string;
   resources: { cpu: number; memory: number; disk: number };
-  ports: { port: number; default: boolean; url: string }[];
+  // Older API versions reported the instance's ports; current ones return null —
+  // any port is reachable at a preview URL, nothing is declared.
+  ports: { port: number; default: boolean; url: string }[] | null;
   user: string | null;
   name: string | null;
   metadata: Record<string, unknown> | null;
@@ -132,7 +134,7 @@ export interface MergedAgent extends AgentRow {
   live_status: string | null;
   status_reason: Agent["status_reason"];
   past_due: boolean;
-  ports: Agent["ports"];
+  ports: NonNullable<Agent["ports"]>;
   update_available: boolean;
 }
 
