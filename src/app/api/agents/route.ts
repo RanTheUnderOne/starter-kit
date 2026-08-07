@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     if (error) throw new ApiError(500, "db_error", error.message);
 
     let live = new Map<string, Agent>();
-    let templateImages = new Map<string, string>();
+    let templates = new Map<string, Template>();
     const [liveRes, tmplRes] = await Promise.allSettled([
       agent37.listAgents(),
       getTemplates(),
@@ -56,9 +56,17 @@ export async function GET(request: Request) {
       live = new Map(liveRes.value.data.map((i) => [i.id, i]));
     }
     if (tmplRes.status === "fulfilled") {
-      templateImages = new Map(
-        tmplRes.value.filter((t) => t.image_ref).map((t) => [t.name, t.image_ref])
-      );
+      templates = new Map(tmplRes.value.map((t) => [t.name, t]));
+    }
+
+    // Registry-pushed templates carry an image_ref to compare; cloud-built ones don't —
+    // for those the template's revision vs the instance's installed template_revision
+    // (missing revisions read as 1) is the documented update signal.
+    function updateAvailable(l: Agent | undefined): boolean {
+      const t = l && templates.get(l.template);
+      if (!l || !t) return false;
+      if (t.image_ref) return !!l.image_ref && l.image_ref !== t.image_ref;
+      return (t.revision ?? 1) > (l.template_revision ?? 1);
     }
 
     const agents: MergedAgent[] = (rows as AgentRow[]).map((row) => {
@@ -68,7 +76,6 @@ export async function GET(request: Request) {
         // caller is a member of (requireMember above).
         db.from("agents").update({ status: l.status }).eq("agent37_id", row.agent37_id).then(() => {});
       }
-      const latestImage = l ? templateImages.get(l.template) : undefined;
       return {
         ...row,
         cpu: l?.resources.cpu ?? row.cpu,
@@ -85,7 +92,7 @@ export async function GET(request: Request) {
                 default: false,
                 url: `https://${row.agent37_id}-${port}.agent37.app`,
               })),
-        update_available: !!(l?.image_ref && latestImage && l.image_ref !== latestImage),
+        update_available: updateAvailable(l),
       };
     });
 

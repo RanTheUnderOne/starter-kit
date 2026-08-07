@@ -57,9 +57,12 @@ async function parseAgent37<T>(res: Response, augment402 = false): Promise<T> {
     const raw = (data ?? {}) as {
       code?: string;
       message?: string;
-      error?: { code?: string; message?: string };
+      error?: string | { code?: string; message?: string };
     };
-    const err = raw.error ?? raw;
+    // Some surfaces (integrations, data-plane transport errors) answer with a flat string
+    // error ({"error":"custom_auth_required"}); treat it as both code and message.
+    const err =
+      typeof raw.error === "string" ? { code: raw.error, message: raw.error } : raw.error ?? raw;
     let message = err.message || res.statusText;
     if (augment402 && res.status === 402) {
       // Almost always an unfunded wallet at create/start time — point the operator at billing.
@@ -133,7 +136,7 @@ export interface CreateAgentInput {
   user?: string;
   name?: string;
   metadata?: Record<string, unknown>;
-  budget?: { monthly_cap_micros?: number; topup_micros?: number };
+  budget?: { monthly_cap_micros?: number; credit_micros?: number };
 }
 
 export interface ResizeInput {
@@ -154,7 +157,13 @@ export const agent37 = {
   stop: (id: string) => call<{ id: string; status: string }>(`/instances/${id}/stop`, { method: "POST" }),
   restart: (id: string) => call<{ id: string; status: string }>(`/instances/${id}/restart`, { method: "POST" }),
   update: (id: string) =>
-    call<{ id: string; status: string; image_ref: string }>(`/instances/${id}/update`, { method: "POST" }),
+    call<{
+      id: string;
+      status: string;
+      image_ref: string | null;
+      image_digest: string | null;
+      template_revision: number | null;
+    }>(`/instances/${id}/update`, { method: "POST" }),
   resize: (id: string, body: ResizeInput) =>
     call<{ id: string; status: string; resources: { cpu: number; memory: number; disk: number } }>(
       `/instances/${id}/resize`,

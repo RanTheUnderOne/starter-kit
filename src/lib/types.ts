@@ -49,7 +49,9 @@ export interface Agent {
     at: number;
   } | null;
   template: string;
-  image_ref: string;
+  // Null for images published by a cloud build; compare template_revision instead.
+  image_ref: string | null;
+  template_revision: number | null;
   resources: { cpu: number; memory: number; disk: number };
   // Older API versions reported the instance's ports; current ones return null —
   // any port is reachable at a preview URL, nothing is declared.
@@ -65,10 +67,13 @@ export interface Agent {
 export interface Template {
   name: string;
   scope: "system" | "workspace";
-  image_ref: string;
+  // Absent for templates published by a cloud build, which carry image_digest instead.
+  image_ref?: string;
+  image_digest?: string;
+  revision: number | null;
+  default_port: number | null;
   agents: string[];
   description: string;
-  ports: { port: number; default: boolean }[];
   created: number | null;
   updated: number | null;
 }
@@ -78,7 +83,7 @@ export interface Budget {
   monthly_consumed_micros: number;
   monthly_remaining_micros: number;
   monthly_period: string;
-  topup_remaining_micros: number;
+  credit_remaining_micros: number;
   updated_at: number | null;
 }
 
