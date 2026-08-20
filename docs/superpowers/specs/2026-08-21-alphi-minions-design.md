@@ -61,6 +61,15 @@ When a user installs or imports a skill through the Alphi Skills tab, Alphi forw
 
 The Alphi Schedules tab forwards authorized operations to Minions. Minions' Python worker calls the local Hermes runtime to manage the underlying scheduled tasks; Alphi does not call the Hermes Dashboard API on port `9119` for these agents.
 
+### Agent task management from chat
+
+- The Alfi Agent image includes a versioned `alfi` CLI under `/usr/local/bin` with an initial `tasks` command group.
+- The CLI calls the same instance's Minions API through `http://127.0.0.1:6969`; it never uses a public URL or an Agent37 credential.
+- Initial commands cover listing tasks, reading one task, creating a task, moving it between `in_progress`, `in_review`, and `done`, and deleting a task.
+- A Hermes skill installed into each new Alfi Agent teaches the agent to use the CLI when the user asks in chat to create, inspect, or update board work.
+- The skill requires explicit user confirmation before deletion and reports the created or changed task ID back to the conversation.
+- CLI-created tasks use the same Minions database and therefore appear immediately in the Alphi Tasks tab; website-created tasks are visible to the CLI in the same way.
+
 ## Security and isolation
 
 - The browser only calls Alphi's same-origin `/api/agents/{id}/minions/**` routes.
@@ -85,4 +94,5 @@ The Alphi Schedules tab forwards authorized operations to Minions. Minions' Pyth
 - Extend the deterministic mobile contract to cover the new tab labels, touch targets, narrow-screen layouts, overflow rules, and retained drawer accessibility without visual browser testing.
 - Build the custom image through Agent37, create one isolated test instance, and verify Minions health on port `6969` with authenticated programmatic access.
 - Verify a skill installation causes Minions to expose it and that a scheduled task can be created, paused, resumed, triggered, and observed through Alphi's BFF.
+- Verify `alfi tasks` against the local Minions service, including stable JSON output, non-zero failures, shared visibility with the web Tasks tab, and the delete-confirmation rule in the Hermes skill.
 - Run typecheck, production build, focused contract tests, and `git diff --check` before each commit and before deployment.
