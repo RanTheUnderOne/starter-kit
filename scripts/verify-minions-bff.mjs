@@ -35,13 +35,31 @@ requireTokens("src/lib/minions/client.ts", client, [
   "https://${id}-6969.agent37.app",
   '"X-Agent37-Key": key',
   'cache: "no-store"',
+  "const contentType = new Headers(init.headers).get(\"content-type\")",
+  "...(contentType ? { \"Content-Type\": contentType } : {})",
 ]);
 requireTokens("src/lib/minions/types.ts", types, [
   "TaskStatus",
   "ScheduledTask",
   "ScheduledTaskRun",
   "SkillMeta",
+  "description: string | null",
+  "agent_model: string | null",
+  "created_at: number",
+  "schedule: Record<string, unknown> | null",
+  "scheduleDisplay: string | null",
+  "contextFrom: string[]",
+  "repeat?: number | null",
+  "displayName: string",
+  "summary: string",
 ]);
+
+if (types.includes("[key: string]: unknown")) {
+  failures.push("src/lib/minions/types.ts must not hide shape mismatches behind index signatures");
+}
+if (client.includes("Object.fromEntries") || client.includes("safeContentHeaders")) {
+  failures.push("src/lib/minions/client.ts must forward only an explicit Content-Type allowlist");
+}
 requireTokens("src/app/api/agents/[id]/minions/[[...path]]/route.ts", route, [
   "requireMinionsAccess",
   "isAllowedMinionsRoute",

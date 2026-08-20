@@ -11,15 +11,11 @@ export async function minionsFetch(id: string, path: string, init: RequestInit =
   }
 
   const origin = `https://${id}-6969.agent37.app`;
-  const safeContentHeaders = new Headers(init.headers);
-  safeContentHeaders.delete("authorization");
-  safeContentHeaders.delete("cookie");
-  safeContentHeaders.delete("x-agent37-key");
-  safeContentHeaders.delete("host");
+  const contentType = new Headers(init.headers).get("content-type");
 
   return fetch(`${origin}/api/${path}`, {
     ...init,
-    headers: { "X-Agent37-Key": key, ...Object.fromEntries(safeContentHeaders.entries()) },
+    headers: { "X-Agent37-Key": key, ...(contentType ? { "Content-Type": contentType } : {}) },
     cache: "no-store",
   });
 }
