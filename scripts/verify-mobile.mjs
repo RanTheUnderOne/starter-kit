@@ -1,8 +1,9 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const drawerHookPath = resolve(root, "src/components/useMobileDrawer.ts");
 const files = {
   dashboard: readFileSync(resolve(root, "src/components/DashboardShell.tsx"), "utf8"),
   workspace: readFileSync(resolve(root, "src/components/AgentWorkspace.tsx"), "utf8"),
@@ -12,7 +13,9 @@ const files = {
   filesView: readFileSync(resolve(root, "src/components/files/FilesView.tsx"), "utf8"),
   chatView: readFileSync(resolve(root, "src/components/chat/ChatView.tsx"), "utf8"),
   chatMessages: readFileSync(resolve(root, "src/components/chat/ChatMessages.tsx"), "utf8"),
+  chatSidebar: readFileSync(resolve(root, "src/components/chat/ChatSidebar.tsx"), "utf8"),
   agentSettings: readFileSync(resolve(root, "src/components/AgentSettingsTab.tsx"), "utf8"),
+  drawerHook: existsSync(drawerHookPath) ? readFileSync(drawerHookPath, "utf8") : "",
 };
 const failures = [];
 
@@ -42,17 +45,39 @@ function requireSection(file, label, startToken, endToken, tokens) {
   }
 }
 
+function forbidSectionToken(file, label, startToken, endToken, token) {
+  const start = files[file].indexOf(startToken);
+  const end = files[file].indexOf(endToken, start + startToken.length);
+  if (start === -1 || end === -1) {
+    failures.push(`${file} is missing ${label} boundaries`);
+    return;
+  }
+  if (files[file].slice(start, end).includes(token)) {
+    failures.push(`${file} ${label} must not include ${token}`);
+  }
+}
+
 requireTokens("dashboard", [
   "md:hidden",
   'aria-label="Open navigation menu"',
   "fixed inset-y-0 left-0",
   "-translate-x-full md:static md:translate-x-0",
   "aria-label=\"Close navigation menu\"",
-  "onClick={() => setMenuOpen(false)}",
-  "useEffect(() => {\n    setMenuOpen(false);\n  }, [pathname]);",
-  'window.matchMedia("(min-width: 768px)")',
+  "useEffect(() => {\n    closeMenu();\n  }, [pathname, closeMenu]);",
   "inert={!isDesktop && !menuOpen}",
   "aria-hidden={!isDesktop && !menuOpen}",
+  "useMobileDrawer()",
+  "ref={triggerRef}",
+  "ref={drawerRef}",
+  'role={!isDesktop ? "dialog" : undefined}',
+  'aria-label="Dashboard navigation"',
+  "aria-modal={!isDesktop && menuOpen ? true : undefined}",
+  "tabIndex={-1}",
+  "onKeyDown={onDrawerKeyDown}",
+  "inert={!isDesktop && menuOpen}",
+  "aria-hidden={!isDesktop && menuOpen}",
+  "min-h-dvh md:min-h-screen",
+  "min-h-[calc(100dvh-57px)] md:min-h-screen",
 ]);
 requireTokens("workspace", [
   "md:hidden",
@@ -62,9 +87,33 @@ requireTokens("workspace", [
   "aria-label=\"Close agent menu\"",
   "touch-manipulation",
   "onClick={() => selectTab(t.id)}",
-  'window.matchMedia("(min-width: 768px)")',
   "inert={!isDesktop && !menuOpen}",
   "aria-hidden={!isDesktop && !menuOpen}",
+  "useMobileDrawer()",
+  "ref={triggerRef}",
+  "ref={drawerRef}",
+  'role={!isDesktop ? "dialog" : undefined}',
+  'aria-label="Agent navigation"',
+  "aria-modal={!isDesktop && menuOpen ? true : undefined}",
+  "tabIndex={-1}",
+  "onKeyDown={onDrawerKeyDown}",
+  "inert={!isDesktop && menuOpen}",
+  "aria-hidden={!isDesktop && menuOpen}",
+  "flex h-dvh flex-col md:h-screen md:flex-row",
+  "<ChatSidebar onNavigate={closeMenu} />",
+]);
+requireTokens("drawerHook", [
+  'window.matchMedia("(min-width: 768px)")',
+  "if (mediaQuery.matches) setMenuOpen(false);",
+  "requestAnimationFrame",
+  "drawerRef.current?.focus()",
+  "triggerRef.current?.focus()",
+  'event.key === "Escape"',
+  'event.key !== "Tab"',
+  "event.shiftKey",
+  "drawer.contains(active)",
+  "focusable[0]",
+  "focusable[focusable.length - 1]",
 ]);
 
 requireTokens("agents", [
@@ -136,7 +185,6 @@ requireSection(
   '<div className="space-y-3 md:hidden">',
   '<div className="hidden overflow-x-auto rounded-lg border bg-card md:block">',
   [
-    "aria-selected={selected}",
     "{...entryHandlers(entry)}",
     'formatBytes(entry.size) || "Unknown size"',
     'formatMtime(entry.modified) || "No modified date"',
@@ -147,6 +195,21 @@ requireSection(
     "onDelete={selectForDelete}",
   ]
 );
+requireTokens("filesView", ["if (e.target !== e.currentTarget) return;"]);
+forbidSectionToken(
+  "filesView",
+  "mobile list cards",
+  '<div className="space-y-3 md:hidden">',
+  '<div className="hidden overflow-x-auto rounded-lg border bg-card md:block">',
+  "aria-selected={selected}"
+);
+forbidSectionToken(
+  "filesView",
+  "grid cards",
+  '<div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">',
+  "{fb.truncated &&",
+  "aria-selected={selected}"
+);
 requireTokens("chatView", [
   "px-3 sm:px-6 md:px-10",
   'showWelcome ? "flex flex-1 flex-col items-center justify-end px-2 pb-4 sm:px-4"',
@@ -154,6 +217,27 @@ requireTokens("chatView", [
   "px-3 pt-3 text-center sm:px-4",
 ]);
 requireTokens("chatMessages", ["px-3 py-4 sm:px-5 sm:py-6"]);
+requireTokens("chatSidebar", [
+  "onNavigate?: () => void",
+  "function createNewChat()",
+  "function openSession(sessionId: string)",
+  "onClick={createNewChat}",
+  "onClick={() => openSession(s.session_id)}",
+  "md:group-hover:opacity-100",
+  "md:group-focus-within:opacity-100",
+  "md:focus-visible:opacity-100",
+]);
+requireSection("chatSidebar", "new-chat navigation callback", "function createNewChat()", "function openSession", [
+  "startNewChat();",
+  "onNavigate?.();",
+]);
+requireSection("chatSidebar", "thread navigation callback", "function openSession", "function startRename", [
+  "selectSession(sessionId);",
+  "onNavigate?.();",
+]);
+requireTokenCount("chatSidebar", "size-11", 2);
+requireTokenCount("chatSidebar", "md:size-7", 2);
+requireTokenCount("chatSidebar", "onNavigate?.();", 2);
 requireTokens("agentSettings", [
   "break-words text-xs text-destructive [overflow-wrap:anywhere]",
   'className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"',

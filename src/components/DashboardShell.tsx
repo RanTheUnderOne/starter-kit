@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, Menu, Settings, Users, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { branding } from "@/config/branding";
 import { AccountMenu } from "@/components/AccountMenu";
+import { useMobileDrawer } from "@/components/useMobileDrawer";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -16,23 +17,15 @@ const NAV = [
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
+  const { menuOpen, isDesktop, openMenu, closeMenu, triggerRef, drawerRef, onDrawerKeyDown } =
+    useMobileDrawer();
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 768px)");
-    const updateIsDesktop = () => setIsDesktop(mediaQuery.matches);
-    updateIsDesktop();
-    mediaQuery.addEventListener("change", updateIsDesktop);
-    return () => mediaQuery.removeEventListener("change", updateIsDesktop);
-  }, []);
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
+    closeMenu();
+  }, [pathname, closeMenu]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh md:min-h-screen">
       <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-card px-4 py-3 md:hidden">
         <div className="flex items-center gap-2">
           {branding.logoUrl ? (
@@ -42,29 +35,36 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <span className="font-semibold">{branding.appName}</span>
         </div>
         <button
+          ref={triggerRef}
           type="button"
           aria-label="Open navigation menu"
           aria-expanded={menuOpen}
-          onClick={() => setMenuOpen(true)}
+          onClick={openMenu}
           className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
           <Menu className="h-5 w-5" />
         </button>
       </header>
 
-      {menuOpen && <button type="button" aria-label="Close navigation menu" className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setMenuOpen(false)} />}
+      {menuOpen && <button type="button" aria-label="Close navigation menu" className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={closeMenu} />}
 
-      <div className="flex min-h-[calc(100vh-57px)] md:min-h-screen">
+      <div className="flex min-h-[calc(100dvh-57px)] md:min-h-screen">
       <aside
+        ref={drawerRef}
+        tabIndex={-1}
+        role={!isDesktop ? "dialog" : undefined}
+        aria-label="Dashboard navigation"
+        aria-modal={!isDesktop && menuOpen ? true : undefined}
         inert={!isDesktop && !menuOpen}
         aria-hidden={!isDesktop && !menuOpen}
+        onKeyDown={onDrawerKeyDown}
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-60 shrink-0 flex-col border-r bg-card p-4 transition-transform md:static md:z-auto md:translate-x-0",
           menuOpen ? "translate-x-0" : "-translate-x-full md:static md:translate-x-0"
         )}
       >
         <div className="flex justify-end md:hidden">
-          <button type="button" aria-label="Close navigation menu" onClick={() => setMenuOpen(false)} className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground">
+          <button type="button" aria-label="Close navigation menu" onClick={closeMenu} className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -86,7 +86,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setMenuOpen(false)}
+                onClick={closeMenu}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -105,7 +105,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 overflow-y-auto">
+      <main
+        inert={!isDesktop && menuOpen}
+        aria-hidden={!isDesktop && menuOpen}
+        className="min-w-0 flex-1 overflow-y-auto"
+      >
         <div className="mx-auto w-full max-w-7xl p-4 md:p-6">{children}</div>
       </main>
       </div>

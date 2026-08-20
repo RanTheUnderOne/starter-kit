@@ -98,6 +98,7 @@ export function FilesView({ agentId }: { agentId: string }) {
   }
 
   function onEntryKeyDown(e: KeyboardEvent<HTMLElement>, entry: FileEntry) {
+    if (e.target !== e.currentTarget) return;
     if (e.key === "Enter") {
       e.preventDefault();
       openEntry(entry);
@@ -286,7 +287,6 @@ export function FilesView({ agentId }: { agentId: string }) {
                     return (
                       <div
                         key={entry.path}
-                        aria-selected={selected}
                         className={cn(
                           "cursor-default select-none space-y-3 rounded-lg border bg-card p-3 outline-none focus-visible:ring-2 focus-visible:ring-ring",
                           selected && "border-primary/35 bg-primary/10"
@@ -401,7 +401,6 @@ export function FilesView({ agentId }: { agentId: string }) {
                   return (
                     <div
                       key={entry.path}
-                      aria-selected={selected}
                       className={cn(
                         "group flex min-h-44 cursor-default select-none flex-col rounded-lg border bg-card p-3 outline-none transition-colors hover:border-primary/35 hover:bg-secondary/25 focus-visible:ring-2 focus-visible:ring-ring",
                         selected && "border-primary/35 bg-primary/10 hover:border-primary/35 hover:bg-primary/10"

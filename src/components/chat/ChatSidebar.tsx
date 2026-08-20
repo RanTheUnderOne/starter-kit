@@ -8,7 +8,7 @@ import { useChatContext } from "./ChatProvider";
 
 // The "Chats" thread rail, rendered in the chat tab's own left column. Selecting or starting a
 // thread updates the chat URL (?session=) so refresh/Back/share reopen it.
-export function ChatSidebar() {
+export function ChatSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { sessions, activeSessionId, onChatTab, loadingSessions, selectSession, startNewChat, deleteSession, renameSession } =
     useChatContext();
   // The open thread stays "active" even when you're on another tab (so its stream isn't cancelled),
@@ -22,6 +22,16 @@ export function ChatSidebar() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const skipBlur = useRef(false);
+
+  function createNewChat() {
+    startNewChat();
+    onNavigate?.();
+  }
+
+  function openSession(sessionId: string) {
+    selectSession(sessionId);
+    onNavigate?.();
+  }
 
   function startRename(sessionId: string, current: string | null) {
     setEditingId(sessionId);
@@ -52,7 +62,7 @@ export function ChatSidebar() {
           <span className="text-xs font-medium text-muted-foreground">Chats</span>
           <button
             type="button"
-            onClick={startNewChat}
+            onClick={createNewChat}
             aria-label="New chat"
             title="New chat"
             className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
@@ -95,10 +105,10 @@ export function ChatSidebar() {
                       <>
                         <button
                           type="button"
-                          onClick={() => selectSession(s.session_id)}
+                          onClick={() => openSession(s.session_id)}
                           onDoubleClick={() => startRename(s.session_id, s.title)}
                           className={cn(
-                            "flex w-full select-none items-center gap-2 rounded-md px-3 py-1.5 pr-14 text-left text-sm transition-colors",
+                            "flex min-h-11 w-full select-none items-center gap-2 rounded-md px-3 py-1.5 pr-24 text-left text-sm transition-colors md:min-h-0 md:pr-14",
                             highlightedSessionId === s.session_id
                               ? "bg-secondary text-foreground"
                               : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
@@ -112,7 +122,7 @@ export function ChatSidebar() {
                           onClick={() => startRename(s.session_id, s.title)}
                           aria-label={`Rename chat ${label}`}
                           title="Rename chat"
-                          className="absolute right-8 top-1/2 -translate-y-1/2 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                          className="absolute right-11 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground opacity-100 transition-opacity hover:text-foreground focus-visible:opacity-100 md:right-7 md:size-7 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 md:focus-visible:opacity-100"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
@@ -121,7 +131,7 @@ export function ChatSidebar() {
                           onClick={() => setPendingDeleteId(s.session_id)}
                           aria-label={`Delete chat ${label}`}
                           title="Delete chat"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                          className="absolute right-0 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground opacity-100 transition-opacity hover:text-destructive focus-visible:opacity-100 md:size-7 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 md:focus-visible:opacity-100"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
