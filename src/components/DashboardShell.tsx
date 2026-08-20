@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Settings, Users } from "lucide-react";
+import { LayoutGrid, Menu, Settings, Users, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { branding } from "@/config/branding";
 import { AccountMenu } from "@/components/AccountMenu";
 import { cn } from "@/lib/utils";
@@ -15,10 +16,58 @@ const NAV = [
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const updateIsDesktop = () => setIsDesktop(mediaQuery.matches);
+    updateIsDesktop();
+    mediaQuery.addEventListener("change", updateIsDesktop);
+    return () => mediaQuery.removeEventListener("change", updateIsDesktop);
+  }, []);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-60 shrink-0 flex-col border-r bg-card p-4">
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-card px-4 py-3 md:hidden">
+        <div className="flex items-center gap-2">
+          {branding.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={branding.logoUrl} alt="Alphi" className="h-8 w-auto object-contain" />
+          ) : null}
+          <span className="font-semibold">{branding.appName}</span>
+        </div>
+        <button
+          type="button"
+          aria-label="Open navigation menu"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen(true)}
+          className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      </header>
+
+      {menuOpen && <button type="button" aria-label="Close navigation menu" className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setMenuOpen(false)} />}
+
+      <div className="flex min-h-[calc(100vh-57px)] md:min-h-screen">
+      <aside
+        inert={!isDesktop && !menuOpen}
+        aria-hidden={!isDesktop && !menuOpen}
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex w-60 shrink-0 flex-col border-r bg-card p-4 transition-transform md:static md:z-auto md:translate-x-0",
+          menuOpen ? "translate-x-0" : "-translate-x-full md:static md:translate-x-0"
+        )}
+      >
+        <div className="flex justify-end md:hidden">
+          <button type="button" aria-label="Close navigation menu" onClick={() => setMenuOpen(false)} className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
         <div className="flex items-center gap-2 px-2 py-1">
           {branding.logoUrl ? (
             <div className="rounded-2xl bg-secondary/70 p-2">
@@ -37,6 +86,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => setMenuOpen(false)}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -58,6 +108,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <main className="min-w-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-7xl p-4 md:p-6">{children}</div>
       </main>
+      </div>
     </div>
   );
 }

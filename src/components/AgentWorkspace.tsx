@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Blocks, FolderOpen, MessageSquare, Settings2 } from "lucide-react";
+import { ArrowLeft, Blocks, FolderOpen, Menu, MessageSquare, Settings2, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { isTransitional } from "@/lib/format";
@@ -51,6 +51,16 @@ export function AgentWorkspace({
 }) {
   const pathname = usePathname();
   const { setCurrentId } = useWorkspace();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const updateIsDesktop = () => setIsDesktop(mediaQuery.matches);
+    updateIsDesktop();
+    mediaQuery.addEventListener("change", updateIsDesktop);
+    return () => mediaQuery.removeEventListener("change", updateIsDesktop);
+  }, []);
 
   // Deep-linking to an agent scopes the WorkspaceProvider to its workspace, so the fleet/switcher
   // and any workspace-derived UI stay in sync after a refresh or shared link.
@@ -93,6 +103,7 @@ export function AgentWorkspace({
   const isFiles = currentTab === "files";
 
   function selectTab(tab: AgentTab) {
+    setMenuOpen(false);
     const path = agentTabPath(agentId, tab);
     if (typeof window !== "undefined" && window.location.pathname !== path) {
       window.history.pushState(null, "", path);
@@ -141,8 +152,63 @@ export function AgentWorkspace({
       onChatTab={isChat}
       navigateToSession={navigateToSession}
     >
-      <div className="flex h-screen">
-        <aside className="flex w-64 shrink-0 flex-col border-r bg-card">
+      <div className="flex h-screen flex-col md:flex-row">
+        <header className="flex items-center justify-between border-b bg-card px-4 py-3 md:hidden">
+          <div className="flex items-center gap-2">
+            {branding.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={branding.logoUrl} alt="Alphi" className="h-8 w-auto object-contain" />
+            ) : null}
+            <span className="font-semibold">{branding.appName}</span>
+          </div>
+          <button
+            type="button"
+            aria-label="Open agent menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(true)}
+            className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </header>
+
+        <nav aria-label="Agent workspace tabs" className="flex overflow-x-auto border-b bg-card px-2 md:hidden">
+          {TABS.map((t) => {
+            const Icon = t.icon;
+            const isActive = currentTab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => selectTab(t.id)}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "flex min-h-11 shrink-0 touch-manipulation items-center gap-2 border-b-2 px-3 text-sm font-medium",
+                  isActive ? "border-primary text-primary" : "border-transparent text-muted-foreground"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {t.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {menuOpen && <button type="button" aria-label="Close agent menu" className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setMenuOpen(false)} />}
+
+        <aside
+          inert={!isDesktop && !menuOpen}
+          aria-hidden={!isDesktop && !menuOpen}
+          className={cn(
+            "fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r bg-card transition-transform md:static md:z-auto md:translate-x-0",
+            menuOpen ? "translate-x-0" : "-translate-x-full md:static md:translate-x-0"
+          )}
+        >
+          <div className="flex justify-end p-2 md:hidden">
+            <button type="button" aria-label="Close agent menu" onClick={() => setMenuOpen(false)} className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
           <div className="flex flex-col p-4 pb-3">
             <div className="flex items-center gap-2 px-2 py-1">
               {branding.logoUrl ? (
@@ -208,7 +274,7 @@ export function AgentWorkspace({
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 overflow-hidden">
+        <main className="min-h-0 min-w-0 flex-1 overflow-hidden">
           {/* Chat owns its full height and stays MOUNTED (just hidden) across tab switches. */}
           {chatOpened && (
             <div className={cn("h-full", !isChat && "hidden")}>
