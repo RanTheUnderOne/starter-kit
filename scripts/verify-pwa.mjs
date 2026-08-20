@@ -25,6 +25,7 @@ const layout = read("src/app/layout.tsx");
 const registration = read("src/components/PwaRegistration.tsx");
 const worker = read("public/sw.js");
 const config = read("next.config.ts");
+const proxy = read("src/proxy.ts");
 
 requireTokens("src/app/manifest.ts", manifest, [
   "name: branding.appName",
@@ -71,6 +72,10 @@ requireTokens("next.config.ts", config, [
   'value: "application/javascript; charset=utf-8"',
   'key: "Cache-Control"',
   'value: "no-cache, no-store, must-revalidate"',
+]);
+requireTokens("src/proxy.ts", proxy, [
+  "manifest\\\\.webmanifest",
+  "sw\\\\.js",
 ]);
 
 for (const [path, expected] of [
