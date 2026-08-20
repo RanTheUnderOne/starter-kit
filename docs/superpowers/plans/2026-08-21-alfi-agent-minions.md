@@ -31,7 +31,6 @@
 - Create repository: `C:\Users\Ran\Desktop\AI Projects\Copmosio Env\alfi-agent-image`
 - Create: `alfi-agent-image/package.json`
 - Create: `alfi-agent-image/scripts/verify-image.mjs`
-- Create: `alfi-agent-image/scripts/release-agent.mjs`
 - Create: `alfi-agent-image/template/Dockerfile`
 - Create: `alfi-agent-image/template/bin/alfi.mjs`
 - Create: `alfi-agent-image/template/s6-rc.d/alfi-minions/type`
@@ -67,7 +66,7 @@ Create the sibling directory, initialize Git on `main`, and add only `package.js
 const requiredDockerTokens = [
   "FROM ghcr.io/agent37-platform/hermes:2026.08.19c",
   "NPM_CONFIG_PREFIX=/usr/local npm install -g minionsai@0.1.27",
-  "COPY bin/alfi.mjs /usr/local/bin/alfi",
+  "COPY --chmod=0755 bin/alfi.mjs /usr/local/bin/alfi",
   "COPY s6-rc.d/alfi-minions /etc/s6-overlay/s6-rc.d/alfi-minions",
   "COPY s6-rc.d/user/contents.d/alfi-minions /etc/s6-overlay/s6-rc.d/user/contents.d/alfi-minions",
   "USER node",
@@ -95,6 +94,7 @@ git commit -m "test: define alfi agent image contract"
 
 **Files:**
 - Modify: `alfi-agent-image/template/Dockerfile`
+- Create: `alfi-agent-image/scripts/release-agent.mjs`
 - Create: `alfi-agent-image/template/bin/alfi.mjs`
 - Create: `alfi-agent-image/template/s6-rc.d/alfi-minions/type`
 - Create: `alfi-agent-image/template/s6-rc.d/alfi-minions/run`
@@ -104,6 +104,7 @@ git commit -m "test: define alfi agent image contract"
 **Interfaces:**
 - Consumes: Minions task routes under `http://127.0.0.1:6969/api/tasks`.
 - Produces: `alfi --version` and `alfi tasks {list,show,create,move,delete}` with stable JSON stdout and non-zero error exits.
+- Produces: an explicit release helper for Agent37 cloud builds; it is not run until Task 8.
 
 - [ ] **Step 1: Implement the image without replacing the inherited entrypoint**
 
@@ -148,7 +149,17 @@ alfi tasks delete <id> --yes            DELETE /tasks/<id>
 
 Require `description` on create, restrict status to `in_progress|in_review|done`, require `--yes` for delete, print only the upstream JSON on success, and print `{ "ok": false, "error": "..." }` to stderr with exit code `1` on transport or HTTP failure.
 
-- [ ] **Step 3: Run the contract and syntax checks**
+- [ ] **Step 3: Add the explicit Agent37 cloud-build release helper**
+
+`scripts/release-agent.mjs` invokes the official Agent37 CLI with the fixed build context and template name:
+
+```text
+npx agent37 templates build template --name alfi-agent --default-port 3737
+```
+
+It must pass through the child process exit status, must not read or print `AGENT37_API_KEY`, and must not run as part of `npm run verify`. Publishing remains an explicit Task 8 action.
+
+- [ ] **Step 4: Run the contract and syntax checks**
 
 ```powershell
 npm run verify
@@ -157,7 +168,7 @@ node --check template/bin/alfi.mjs
 
 Expected: `Alfi Agent image verification passed.` and both commands exit `0`.
 
-- [ ] **Step 4: Commit the image implementation**
+- [ ] **Step 5: Commit the image implementation**
 
 ```powershell
 git add template scripts/verify-image.mjs
