@@ -152,6 +152,11 @@ export const agent37 = {
     call<Agent>("/instances", { method: "POST", body: JSON.stringify(body) }),
   deleteAgent: (id: string) =>
     call<{ id: string; deleted: boolean }>(`/instances/${id}`, { method: "DELETE" }),
+  exec: (id: string, command: string) =>
+    call<{ stdout: string; stderr: string; exit_code: number }>(`/instances/${id}/exec`, {
+      method: "POST",
+      body: JSON.stringify({ command }),
+    }),
 
   start: (id: string) => call<{ id: string; status: string }>(`/instances/${id}/start`, { method: "POST" }),
   stop: (id: string) => call<{ id: string; status: string }>(`/instances/${id}/stop`, { method: "POST" }),

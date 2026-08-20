@@ -1,6 +1,7 @@
 import { agent37 } from "@/lib/agent37";
 import { requireAdmin, requireMember, requireUser } from "@/lib/auth";
-import { AGENT_TEMPLATES, DEFAULT_AGENT, templateAppPorts } from "@/config/agents";
+import { AGENT_TEMPLATES, DEFAULT_AGENT, templateAppPorts, templateBaseName } from "@/config/agents";
+import { ALFI_TASK_MANAGER_SKILL } from "@/lib/alfi-task-skill";
 import { usdToMicros } from "@/lib/format";
 import { ApiError, handleError, json, readJson } from "@/lib/http";
 import type { Agent, AgentRow, MergedAgent, Template } from "@/lib/types";
@@ -131,6 +132,25 @@ export async function POST(request: Request) {
       metadata: { app_workspace: workspaceId },
       budget: { monthly_cap_micros: usdToMicros(DEFAULT_AGENT.monthlyCapUsd) },
     });
+
+    if (templateBaseName(agent.template) === "alfi-agent") {
+      const encodedSkill = Buffer.from(ALFI_TASK_MANAGER_SKILL, "utf8").toString("base64");
+      const skillPath = "~/.hermes/skills/alfi-task-manager/SKILL.md";
+      const command = `mkdir -p ~/.hermes/skills/alfi-task-manager && printf %s '${encodedSkill}' | base64 -d > ${skillPath}`;
+      try {
+        const result = await agent37.exec(agent.id, command);
+        if (result.exit_code !== 0) {
+          throw new Error(result.stderr || "Task-management skill installation failed");
+        }
+      } catch {
+        try {
+          await agent37.deleteAgent(agent.id);
+        } catch {
+          /* best-effort orphan rollback */
+        }
+        throw new ApiError(502, "provisioning_error", "Could not provision Alfi Agent task management");
+      }
+    }
 
     const { error } = await db.from("agents").insert({
       agent37_id: agent.id,

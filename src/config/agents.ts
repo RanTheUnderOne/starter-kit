@@ -27,6 +27,7 @@ export interface AgentTypeOption {
   label: string;
   description: string;
   recommended?: boolean;
+  capabilities?: readonly ("minions")[];
 }
 
 // The agent types offered on the create screen. This is the curated catalog —
@@ -48,9 +49,24 @@ export const AGENT_TYPES: AgentTypeOption[] = [
     label: "OpenClaw",
     description: "General agent: headless browser, code, files.",
   },
+  {
+    id: "alfi-agent",
+    template: "alfi-agent@1",
+    label: "Alfi Agent",
+    description: "Business agent with built-in task management.",
+    capabilities: ["minions"],
+  },
 ];
 
 export const AGENT_TEMPLATES = AGENT_TYPES.map((a) => a.template);
+
+export function templateBaseName(template?: string | null): string {
+  return (template ?? "").split("@", 1)[0];
+}
+
+export function isAlfiAgentTemplate(template?: string | null): boolean {
+  return templateBaseName(template) === "alfi-agent";
+}
 
 // Labels for the "open in new tab" buttons; any port not listed here falls back
 // to "Port {n}".
