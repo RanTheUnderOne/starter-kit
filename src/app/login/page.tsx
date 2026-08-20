@@ -122,7 +122,7 @@ export default function LoginPage() {
         <div className="space-y-1 text-center">
           {branding.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={branding.logoUrl} alt="Alphi" className="mx-auto h-9 w-auto object-contain" />
+            <img src={branding.logoUrl} alt="Alphi" className="mx-auto h-24 w-24 object-contain" />
           ) : null}
           <h1 className="text-2xl font-semibold tracking-tight">{branding.appName}</h1>
           <p className="text-sm text-muted-foreground">{copy.subtitle}</p>

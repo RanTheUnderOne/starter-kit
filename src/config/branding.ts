@@ -3,5 +3,5 @@
 // absolute URL; "" hides it.
 export const branding = {
   appName: "Alphi Business Agent",
-  logoUrl: "/alphi-logo.png",
+  logoUrl: "/alphi-logo.jpg",
 } as const;

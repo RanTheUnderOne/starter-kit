@@ -6,8 +6,9 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const brandingPath = resolve(root, "src/config/branding.ts");
 const globalsPath = resolve(root, "src/app/globals.css");
-const logoPath = resolve(root, "public/alphi-logo.png");
+const logoPath = resolve(root, "public/alphi-logo.jpg");
 const agentWorkspacePath = resolve(root, "src/components/AgentWorkspace.tsx");
+const loginPath = resolve(root, "src/app/login/page.tsx");
 const branding = readFileSync(brandingPath, "utf8");
 const globals = readFileSync(globalsPath, "utf8");
 const failures = [];
@@ -23,16 +24,16 @@ const brandSurfaces = [
 if (!/appName:\s*["']Alphi Business Agent["']/.test(branding)) {
   failures.push('branding.appName must be "Alphi Business Agent"');
 }
-if (!/logoUrl:\s*["']\/alphi-logo\.png["']/.test(branding)) {
-  failures.push('branding.logoUrl must be "/alphi-logo.png"');
+if (!/logoUrl:\s*["']\/alphi-logo\.jpg["']/.test(branding)) {
+  failures.push('branding.logoUrl must be "/alphi-logo.jpg"');
 }
 if (!existsSync(logoPath)) {
-  failures.push("public/alphi-logo.png is missing");
+  failures.push("public/alphi-logo.jpg is missing");
 }
 if (existsSync(logoPath)) {
   const logoHash = createHash("sha256").update(readFileSync(logoPath)).digest("hex");
-  if (logoHash !== "f479d7f4b0c7fe6167ef7f9cb199b6b6d46c7bebd86e0a1917cc92ae77f69cd6") {
-    failures.push("public/alphi-logo.png does not match the official Alphi logo");
+  if (logoHash !== "9ad464f2a45a667c31e0cbef23d9b85c9741d0f2b17c74ea52174840b4a2ca08") {
+    failures.push("public/alphi-logo.jpg does not match the official Alphi logo");
   }
 }
 for (const token of [
@@ -59,6 +60,10 @@ for (const className of ["rounded-2xl bg-secondary/70", "h-9 w-auto object-conta
   if (!agentWorkspace.includes(className)) {
     failures.push(`src/components/AgentWorkspace.tsx is missing ${className}`);
   }
+}
+const login = readFileSync(loginPath, "utf8");
+if (!login.includes('className="mx-auto h-24 w-24 object-contain"')) {
+  failures.push("src/app/login/page.tsx must give the Alphi logo a prominent h-24 display");
 }
 
 if (failures.length > 0) {
