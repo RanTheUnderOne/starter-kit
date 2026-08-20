@@ -60,10 +60,14 @@ export function AgentsView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight">Agents</h1>
-          <p className="text-sm text-muted-foreground">{current.name}</p>
+          <p
+            className="min-w-0 break-words text-sm text-muted-foreground [overflow-wrap:anywhere]"
+          >
+            {current.name}
+          </p>
         </div>
         {role === "admin" && <CreateAgentButton workspaceId={current.id} onCreated={load} />}
       </div>
@@ -79,8 +83,82 @@ export function AgentsView() {
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[860px] text-sm">
+        <>
+          <div className="space-y-3 md:hidden">
+            {agents.map((a) => (
+              <div key={a.agent37_id} className="space-y-4 rounded-lg border p-4">
+                <div className="space-y-2">
+                  <div className="min-w-0 [&>div]:w-full">
+                    <AgentNameCell
+                      agent={a}
+                      canEdit={role === "admin"}
+                      onRenamed={load}
+                      href={agentTabPath(a.agent37_id, "chat")}
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant={statusVariant(a.live_status)}
+                      className="min-w-0 max-w-full whitespace-normal break-words [overflow-wrap:anywhere]"
+                      title={a.live_status ?? "unknown"}
+                    >
+                      {a.live_status ?? "unknown"}
+                    </Badge>
+                    {a.past_due && <Badge variant="warning">past due</Badge>}
+                  </div>
+                  {a.status_reason && (
+                    <p
+                      className="break-words text-xs text-destructive [overflow-wrap:anywhere]"
+                    >
+                      {a.status_reason.message}
+                    </p>
+                  )}
+                </div>
+
+                <dl className="space-y-2 text-sm">
+                  <div>
+                    <dt className="text-xs font-medium text-muted-foreground">Template</dt>
+                    <dd className="mt-0.5 break-words [overflow-wrap:anywhere]">
+                      {a.template ?? "-"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium text-muted-foreground">Resources</dt>
+                    <dd className="mt-0.5 text-muted-foreground">
+                      {a.cpu} vCPU · {a.memory} GB · {a.disk} GB
+                    </dd>
+                  </div>
+                </dl>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={agentTabPath(a.agent37_id, "chat")}>
+                      <MessageSquare className="h-4 w-4" />
+                      Chat
+                    </Link>
+                  </Button>
+                  <div className="min-w-0">
+                    <OpenPortButtons
+                      agentId={a.agent37_id}
+                      ports={a.ports}
+                      disabled={a.live_status !== "running"}
+                      template={a.template}
+                      size="sm"
+                      className="flex-wrap"
+                    />
+                  </div>
+                  {role === "admin" && (
+                    <span>
+                      <AgentOptionsMenu agent={a} onChanged={load} />
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto rounded-lg border md:block">
+            <table className="w-full min-w-[860px] text-sm">
             <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
@@ -141,8 +219,9 @@ export function AgentsView() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

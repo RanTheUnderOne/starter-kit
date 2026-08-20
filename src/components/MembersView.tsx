@@ -101,10 +101,14 @@ export function MembersView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight">Members</h1>
-          <p className="text-sm text-muted-foreground">{current.name}</p>
+          <p
+            className="min-w-0 break-words text-sm text-muted-foreground [overflow-wrap:anywhere]"
+          >
+            {current.name}
+          </p>
         </div>
         {isAdmin && (
           <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
@@ -139,7 +143,33 @@ export function MembersView() {
         <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
         <div className="space-y-6">
-          <div className="overflow-hidden rounded-lg border">
+          <div className="space-y-3 sm:hidden">
+            {members.map((m) => (
+              <div key={m.user_id} className="space-y-3 rounded-lg border p-4">
+                <div className="min-w-0">
+                  <p className="break-all text-sm font-medium">{m.email}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Added {formatDate(m.created_at)}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <Badge>{m.role.charAt(0).toUpperCase() + m.role.slice(1)}</Badge>
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeMember(m.user_id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-lg border sm:block">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
                 <tr>
@@ -181,31 +211,33 @@ export function MembersView() {
               <div className="divide-y rounded-lg border">
                 {invitations.map((inv) => (
                   <div key={inv.token} className="space-y-2 p-4">
-                    <div className="flex items-center gap-2">
-                      <code className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <code className="min-w-0 break-all font-mono text-xs text-muted-foreground sm:flex-1 sm:truncate">
                         {inviteUrl(inv.token)}
                       </code>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0"
-                        onClick={() => {
-                          navigator.clipboard.writeText(inviteUrl(inv.token));
-                          toast.success("Link copied");
-                        }}
-                      >
-                        <Copy className="h-4 w-4" />
-                        Copy link
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0"
-                        aria-label="Revoke invite"
-                        onClick={() => revokeInvite(inv.token)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="shrink-0"
+                          onClick={() => {
+                            navigator.clipboard.writeText(inviteUrl(inv.token));
+                            toast.success("Link copied");
+                          }}
+                        >
+                          <Copy className="h-4 w-4" />
+                          Copy link
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0"
+                          aria-label="Revoke invite"
+                          onClick={() => revokeInvite(inv.token)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Created {formatDate(inv.created_at)} · anyone with this link joins as an admin

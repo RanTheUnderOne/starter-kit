@@ -52,14 +52,18 @@ export function SettingsView() {
 
   return (
     <div className="max-w-xl space-y-8">
-      <div>
+      <div className="min-w-0">
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">{current.name}</p>
+        <p
+          className="min-w-0 break-words text-sm text-muted-foreground [overflow-wrap:anywhere]"
+        >
+          {current.name}
+        </p>
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="ws-name">Workspace name</Label>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             id="ws-name"
             value={name}
@@ -67,7 +71,11 @@ export function SettingsView() {
             disabled={!isAdmin}
           />
           {isAdmin && (
-            <Button onClick={save} disabled={busy || !name.trim() || name.trim() === current.name}>
+            <Button
+              className="sm:shrink-0"
+              onClick={save}
+              disabled={busy || !name.trim() || name.trim() === current.name}
+            >
               Save
             </Button>
           )}
@@ -76,17 +84,19 @@ export function SettingsView() {
 
       <div className="space-y-2">
         <Label>Workspace ID</Label>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Input readOnly value={current.id} className="font-mono text-xs" />
           <Button
             variant="outline"
-            size="icon"
+            className="sm:size-9 sm:shrink-0 sm:px-0"
+            aria-label="Copy workspace ID"
             onClick={() => {
               navigator.clipboard.writeText(current.id);
               toast.success("Copied");
             }}
           >
             <Copy className="h-4 w-4" />
+            <span className="sm:sr-only">Copy workspace ID</span>
           </Button>
         </div>
       </div>

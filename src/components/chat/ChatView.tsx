@@ -81,7 +81,7 @@ export function ChatView() {
   return (
     <div className="relative flex h-full min-h-0 flex-col" {...att.dragHandlers}>
       {att.dragOver && <DropOverlay label="Drop files to attach" />}
-      <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background px-6 md:px-10">
+      <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background px-3 sm:px-6 md:px-10">
         <div className="min-w-0">
           <h1 className="truncate text-base font-semibold text-foreground">{headerTitle}</h1>
           <p className="truncate text-xs text-muted-foreground">{agentName}</p>
@@ -103,7 +103,7 @@ export function ChatView() {
         onScroll={onScroll}
         className={cn(
           "min-h-0",
-          showWelcome ? "flex flex-1 flex-col items-center justify-end px-4 pb-4" : "flex-1 overflow-y-auto"
+          showWelcome ? "flex flex-1 flex-col items-center justify-end px-2 pb-4 sm:px-4" : "flex-1 overflow-y-auto"
         )}
       >
         {loadingHistory ? (
@@ -121,7 +121,7 @@ export function ChatView() {
 
       {/* Composer wrapper — the STABLE 2nd child. Its chrome (docked vs bare centered) is a
           className swap so the ChatComposer inside never changes tree position. */}
-      <div className={cn("relative", showWelcome ? "w-full px-6 md:px-10" : "bg-background px-6 py-3 md:px-10 sm:py-4")}>
+      <div className={cn("relative", showWelcome ? "w-full px-3 sm:px-6 md:px-10" : "bg-background px-3 py-3 sm:px-6 sm:py-4 md:px-10")}>
         {/* No hard divider — a short fade dissolves the transcript into the composer instead. */}
         {!showWelcome && (
           <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent" />
@@ -142,7 +142,7 @@ export function ChatView() {
 
       {/* Bottom: balances the vertical centering and carries the welcome subtitle. */}
       {showWelcome && (
-        <div className="flex flex-1 flex-col items-center px-4 pt-3">
+        <div className="flex flex-1 flex-col items-center px-3 pt-3 text-center sm:px-4">
           <p className="text-sm text-muted-foreground">
             The more context you give, the better your agent can help.
           </p>

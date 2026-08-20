@@ -84,7 +84,7 @@ function TypingDots() {
 
 export function ChatMessages({ messages, isStreaming }: { messages: ChatMessage[]; isStreaming: boolean }) {
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-5 px-5 py-6">
+    <div className="mx-auto w-full max-w-2xl space-y-5 px-3 py-4 sm:px-5 sm:py-6">
       {messages.map((m, i) => {
         if (m.role === "user") {
           const attachments = m.attachments ?? [];

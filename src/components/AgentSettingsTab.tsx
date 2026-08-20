@@ -52,10 +52,14 @@ export function AgentSettingsTab({
   return (
     <div className="space-y-6">
       <header className="space-y-3">
-        <div className="flex items-start justify-between gap-4">
+        <div
+          className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+        >
           <NameEditor agentId={agentId} agent={agent} isAdmin={isAdmin} onChanged={onChanged} />
           {isAdmin && (
-            <div className="flex shrink-0 items-center gap-1.5">
+            <div
+              className="flex flex-wrap items-center gap-1.5 sm:shrink-0"
+            >
               {running ? (
                 <IconAction label="Stop" icon={Square} disabled={busy || transitional} onClick={() => action("stop", "Stopping")} />
               ) : (
@@ -83,9 +87,23 @@ export function AgentSettingsTab({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={statusVariant(agent.live_status)}>{agent.live_status ?? "unknown"}</Badge>
+          <Badge
+            variant={statusVariant(agent.live_status)}
+            className="min-w-0 max-w-full whitespace-normal break-words [overflow-wrap:anywhere] sm:max-w-none sm:whitespace-nowrap sm:break-normal sm:[overflow-wrap:normal]"
+            title={agent.live_status ?? "unknown"}
+          >
+            {agent.live_status ?? "unknown"}
+          </Badge>
           {shapeLabel(agent) && <Badge variant="outline">{shapeLabel(agent)}</Badge>}
-          {templateLabel(agent) && <Badge variant="outline">{templateLabel(agent)}</Badge>}
+          {templateLabel(agent) && (
+            <Badge
+              variant="outline"
+              className="min-w-0 max-w-full whitespace-normal break-words [overflow-wrap:anywhere] sm:max-w-none sm:whitespace-nowrap sm:break-normal sm:[overflow-wrap:normal]"
+              title={templateLabel(agent) ?? undefined}
+            >
+              {templateLabel(agent)}
+            </Badge>
+          )}
           {agent.past_due && <Badge variant="warning">past due</Badge>}
           <span className="truncate font-mono text-xs text-muted-foreground" title={agent.agent37_id}>
             {agent.agent37_id}
@@ -93,7 +111,10 @@ export function AgentSettingsTab({
         </div>
 
         {agent.status_reason && (
-          <p className="text-xs text-destructive" title={agent.status_reason.message}>
+          <p
+            className="break-words text-xs text-destructive [overflow-wrap:anywhere]"
+            title={agent.status_reason.message}
+          >
             {agent.status_reason.message}
           </p>
         )}
@@ -308,7 +329,7 @@ function BudgetSection({ agentId }: { agentId: string }) {
           <p className="py-2 text-sm text-muted-foreground">Loading...</p>
         ) : (
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Stat label="Monthly cap" value={usd(budget.monthly_cap_micros)} />
               <Stat label="Spent" value={usd(budget.monthly_consumed_micros)} />
               <Stat label="Remaining" value={usd(budget.monthly_remaining_micros)} />
@@ -349,7 +370,9 @@ function UsageRow({
   last?: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between px-3 py-2.5 text-sm ${last ? "" : "border-b"}`}>
+    <div
+      className={`flex flex-col gap-1 px-3 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between ${last ? "" : "border-b"}`}
+    >
       <span className="flex items-center gap-2 font-medium [&_svg]:size-4 [&_svg]:text-muted-foreground">
         {icon}
         {label}

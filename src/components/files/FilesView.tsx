@@ -278,8 +278,68 @@ export function FilesView({ agentId }: { agentId: string }) {
                 onUpload={() => uploadRef.current?.click()}
               />
             ) : viewMode === "list" ? (
-              <div className="overflow-x-auto rounded-lg border bg-card">
-                <table className="w-full min-w-[700px] table-fixed text-sm">
+              <>
+                <div className="space-y-3 md:hidden">
+                  {fb.visibleEntries.map((entry) => {
+                    const editing = editingPath === entry.path;
+                    const selected = selectedEntry?.path === entry.path;
+                    return (
+                      <div
+                        key={entry.path}
+                        aria-selected={selected}
+                        className={cn(
+                          "cursor-default select-none space-y-3 rounded-lg border bg-card p-3 outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          selected && "border-primary/35 bg-primary/10"
+                        )}
+                        {...entryHandlers(entry)}
+                      >
+                        {editing ? (
+                          <RenameInput
+                            entry={entry}
+                            draft={draft}
+                            setDraft={setDraft}
+                            onRenameKeyDown={onRenameKeyDown}
+                            commitRename={commitRename}
+                            skipBlurRef={skipBlurRef}
+                          />
+                        ) : (
+                          <EntryName entry={entry} selected={selected} />
+                        )}
+                        <div className="flex flex-wrap items-end justify-between gap-3 text-xs text-muted-foreground">
+                          <div className="space-y-1">
+                            <p>
+                              {isDir(entry) ? "Folder" : formatBytes(entry.size) || "Unknown size"}
+                            </p>
+                            <p>{formatMtime(entry.modified) || "No modified date"}</p>
+                          </div>
+                          <div
+                            className="flex flex-wrap items-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
+                            onDoubleClick={(e) => e.stopPropagation()}
+                          >
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openEntry(entry)}
+                            >
+                              Open
+                            </Button>
+                            <SelectedActions
+                              agentId={agentId}
+                              entry={entry}
+                              onRename={startRename}
+                              onDelete={selectForDelete}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="hidden overflow-x-auto rounded-lg border bg-card md:block">
+                  <table className="w-full min-w-[700px] table-fixed text-sm">
                   <colgroup>
                     <col />
                     <col className="w-28" />
@@ -330,8 +390,9 @@ export function FilesView({ agentId }: { agentId: string }) {
                       );
                     })}
                   </tbody>
-                </table>
-              </div>
+                  </table>
+                </div>
+              </>
             ) : (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">
                 {fb.visibleEntries.map((entry) => {
