@@ -6,7 +6,7 @@ Extend the existing Alphi Business Agent dashboard with first-class task, skill,
 
 ## Approved direction
 
-Alphi will add an **Alphi Task Agent** type. Creating this type provisions a new Agent37 instance from a workspace template that bundles Hermes and Minions. Existing agents keep their current Hermes template, tabs, behavior, and deployment unchanged.
+Alphi will add an **Alphi Task Agent** type. Creating this type provisions a new Agent37 instance from the **Alfi Agent** workspace template, which bundles Hermes and Minions. Existing agents keep their current Hermes template, tabs, behavior, and deployment unchanged.
 
 The existing Alphi dashboard will render the new capabilities natively. It will not embed or publicly expose the Minions UI.
 
@@ -31,7 +31,7 @@ The custom image must preserve Hermes as an operational service while also start
 ### Agent creation
 
 - The creation UI offers `Alphi Task Agent` in addition to existing agent types.
-- The type points to the version-pinned workspace template `alphi-minions@1` when that template is published.
+- The type points to the version-pinned workspace template `alfi-agent@1` when that template is published.
 - The normal ownership mirror, default shape, budget handling, and lifecycle behavior continue to use the existing Alphi creation path.
 - Creation errors clearly distinguish an unavailable template from ordinary Agent37 errors.
 
