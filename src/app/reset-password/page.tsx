@@ -41,6 +41,10 @@ export default function ResetPasswordPage() {
     <main className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm space-y-6">
         <div className="space-y-1 text-center">
+          {branding.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={branding.logoUrl} alt="Alphi" className="mx-auto h-9 w-auto object-contain" />
+          ) : null}
           <h1 className="text-2xl font-semibold tracking-tight">{branding.appName}</h1>
           {hasSession && !done && (
             <p className="text-sm text-muted-foreground">Choose a new password.</p>

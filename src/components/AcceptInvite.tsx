@@ -36,6 +36,10 @@ export function AcceptInvite({
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm space-y-6 text-center">
+        {branding.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={branding.logoUrl} alt="Alphi" className="mx-auto h-9 w-auto object-contain" />
+        ) : null}
         <h1 className="text-xl font-semibold tracking-tight">{branding.appName}</h1>
         <div className="rounded-lg border bg-card p-6">
           <p className="text-sm text-muted-foreground">You&apos;ve been invited to join</p>

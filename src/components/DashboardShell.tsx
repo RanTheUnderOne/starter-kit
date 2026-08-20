@@ -21,8 +21,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <aside className="flex w-60 shrink-0 flex-col border-r bg-card p-4">
         <div className="flex items-center gap-2 px-2 py-1">
           {branding.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={branding.logoUrl} alt="" className="h-6 w-6 rounded" />
+            <div className="rounded-2xl bg-secondary/70 p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={branding.logoUrl} alt="Alphi" className="h-9 w-auto object-contain" />
+            </div>
           ) : null}
           <span className="truncate font-semibold">{branding.appName}</span>
         </div>
@@ -37,7 +39,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  active ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" />

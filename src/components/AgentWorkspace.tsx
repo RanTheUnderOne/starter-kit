@@ -146,8 +146,10 @@ export function AgentWorkspace({
           <div className="flex flex-col p-4 pb-3">
             <div className="flex items-center gap-2 px-2 py-1">
               {branding.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={branding.logoUrl} alt="" className="h-6 w-6 rounded" />
+                <div className="rounded-2xl bg-secondary/70 p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={branding.logoUrl} alt="Alphi" className="h-9 w-auto object-contain" />
+                </div>
               ) : null}
               <span className="truncate font-semibold">{branding.appName}</span>
             </div>
@@ -177,7 +179,7 @@ export function AgentWorkspace({
                     className={cn(
                       "flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-secondary text-secondary-foreground"
+                        ? "bg-primary text-primary-foreground shadow-sm"
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     )}
                   >
