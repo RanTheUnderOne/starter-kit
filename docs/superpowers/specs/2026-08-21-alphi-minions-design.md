@@ -45,6 +45,14 @@ For an Alphi Task Agent, the per-agent workspace adds:
 
 Existing agents continue to show exactly Chat, Files, Integrations, and Settings. A direct URL for a Minions-only tab on an existing agent returns the normal not-found behavior rather than rendering an unusable screen.
 
+### Mobile behavior
+
+- Tasks, Skills, and Schedules are first-class responsive views in the existing Alphi mobile workspace; they are not desktop-only pages or embedded Minions screens.
+- The existing mobile drawer and horizontal tab navigation expose the new tabs without breaking keyboard, focus, or touch behavior.
+- Task boards collapse into touch-friendly status sections or cards on narrow screens; no horizontal page overflow is required to manage a task.
+- Forms, action menus, skill content, schedule details, loading states, and errors remain usable at a 320px viewport width.
+- The PWA remains installable-only. These views do not add offline caching or store Minions, agent, or user data in the service worker.
+
 ### Skills and Hermes
 
 When a user installs or imports a skill through the Alphi Skills tab, Alphi forwards the authorized request to that agent's Minions service. Minions stores skills in `~/.minions/skills` and updates the same instance's `~/.hermes/config.yaml` so the directory appears in Hermes `external_dirs`. Hermes subsequently loads the skills. Alphi does not edit Hermes configuration itself.
@@ -74,6 +82,7 @@ The Alphi Schedules tab forwards authorized operations to Minions. Minions' Pyth
 - Use deterministic automated tests and contract scripts only; do not perform visual browser testing.
 - Test server routes for authorization, agent-type gating, upstream request construction, response mapping, and failed upstream responses.
 - Test tab grammar and conditional navigation for new versus existing agents.
+- Extend the deterministic mobile contract to cover the new tab labels, touch targets, narrow-screen layouts, overflow rules, and retained drawer accessibility without visual browser testing.
 - Build the custom image through Agent37, create one isolated test instance, and verify Minions health on port `6969` with authenticated programmatic access.
 - Verify a skill installation causes Minions to expose it and that a scheduled task can be created, paused, resumed, triggered, and observed through Alphi's BFF.
 - Run typecheck, production build, focused contract tests, and `git diff --check` before each commit and before deployment.
