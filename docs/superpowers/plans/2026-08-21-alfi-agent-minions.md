@@ -4,15 +4,16 @@
 
 **Goal:** Publish a version-pinned Alfi Agent image containing Hermes, Minions, and a local task CLI, then add native responsive Tasks, Skills, and Schedules management to the existing Alphi dashboard for newly created Alfi Agent instances only.
 
-**Architecture:** A separate `alfi-agent-image` build context extends the dated Agent37 Hermes image and starts Minions as an s6-supervised service on port `6969`. The Alphi Next.js BFF authenticates the user, verifies agent ownership and template capability, then calls the instance preview URL with `X-Agent37-Key`; the browser never receives Agent37 credentials or a Minions URL. A local `alfi tasks` CLI calls Minions over loopback, and a provisioned Hermes skill teaches the agent to use it from chat.
+**Architecture:** A separate `alfi-agent-image` build context extends the dated Agent37 Hermes image. Following Agent37's official `examples/custom-images/hermes-vnc-desktop` pattern, a small wrapper entrypoint starts a supervised Minions process on port `6969`, then `exec`s the inherited `/usr/local/bin/entrypoint.sh` so Hermes remains the container's main process. The Alphi Next.js BFF authenticates the user, verifies agent ownership and template capability, then calls the instance preview URL with `X-Agent37-Key`; the browser never receives Agent37 credentials or a Minions URL. A local `alfi tasks` CLI calls Minions over loopback, and a provisioned Hermes skill teaches the agent to use it from chat.
 
-**Tech Stack:** Agent37 workspace templates, `ghcr.io/agent37-platform/hermes:2026.08.19c`, Minions `minionsai@0.1.27`, s6-overlay, Node.js CLI, Next.js 16 App Router, React 19, TypeScript, Supabase server authorization, Tailwind CSS, Node contract tests.
+**Tech Stack:** Agent37 workspace templates, `ghcr.io/agent37-platform/hermes:2026.08.19c`, Minions `minionsai@0.1.27`, Bash process supervision, Node.js CLI, Next.js 16 App Router, React 19, TypeScript, Supabase server authorization, Tailwind CSS, Node contract tests.
 
 ## Global Constraints
 
-- The image/template name is `alfi-agent`; the first pinned application value is `alfi-agent@1`.
+- The image/template name is `alfi-agent`; revisions `@1` through `@3` are rejected prototypes, and the next candidate is `alfi-agent@4`.
 - Existing agents, templates, instances, tabs, and the current production deployment remain unchanged.
-- Keep the inherited Hermes `ENTRYPOINT`; install binaries in `/usr/local` and image assets in `/opt`, never `/home/node` or `/home/linuxbrew`.
+- Preserve the inherited Hermes startup contract by ending the wrapper with `exec /usr/local/bin/entrypoint.sh`; install binaries in `/usr/local` and image assets in `/opt`, never `/home/node` or `/home/linuxbrew`.
+- Do not use s6 assumptions, `AGENT37_HOOKS_DIR`, or any undocumented Agent37 runtime variable.
 - Pin Hermes to `2026.08.19c` and Minions to `0.1.27`; do not use `latest` during the implementation.
 - Minions listens on `0.0.0.0:6969`, but port `6969` is never made public.
 - The browser only calls same-origin Alphi APIs. `AGENT37_API_KEY` stays server-only and is sent to Agent37 preview URLs only through `X-Agent37-Key`.
@@ -25,80 +26,46 @@
 
 ---
 
-### Task 1: Create the separate Alfi Agent image repository and failing image contract
+### Task 1: Replace the obsolete image contract with the official wrapper-entrypoint contract
 
 **Files:**
-- Create repository: `C:\Users\Ran\Desktop\AI Projects\Copmosio Env\alfi-agent-image`
-- Create: `alfi-agent-image/package.json`
-- Create: `alfi-agent-image/scripts/verify-image.mjs`
-- Create: `alfi-agent-image/template/Dockerfile`
-- Create: `alfi-agent-image/template/bin/alfi.mjs`
-- Create: `alfi-agent-image/template/s6-rc.d/alfi-minions/type`
-- Create: `alfi-agent-image/template/s6-rc.d/alfi-minions/run`
-- Create: `alfi-agent-image/template/s6-rc.d/user/contents.d/alfi-minions`
+- Modify: `alfi-agent-image/scripts/verify-image.mjs`
+- Modify: `alfi-agent-image/template/Dockerfile`
+- Create: `alfi-agent-image/template/bin/entrypoint.sh`
+- Retain: `alfi-agent-image/template/bin/supervise-minions.sh`
+- Delete: obsolete `alfi-agent-image/template/hooks/`
 
 **Interfaces:**
-- Consumes: the Agent37 custom-image cloud-build contract and the inherited Hermes s6-overlay entrypoint.
-- Produces: a build context that installs `minions`, installs `/usr/local/bin/alfi`, and declares one supervised Minions service without overriding `ENTRYPOINT`.
+- Consumes: the official Agent37 wrapper pattern from `agent37-platform/examples/custom-images/hermes-vnc-desktop`.
+- Produces: a build context that starts Minions beside Hermes without internal hooks, then chains to the inherited Hermes entrypoint.
 
-- [ ] **Step 1: Initialize the dedicated repository**
+- [ ] **Step 1: Write and run the failing deterministic image verifier**
 
-Create the sibling directory, initialize Git on `main`, and add only `package.json`, `scripts/`, and `template/`. The package scripts are:
-
-```json
-{
-  "name": "alfi-agent-image",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "verify": "node scripts/verify-image.mjs",
-    "release": "node scripts/release-agent.mjs"
-  }
-}
-```
-
-- [ ] **Step 2: Write the failing deterministic image verifier**
-
-`scripts/verify-image.mjs` reads the Dockerfile, CLI, and s6 files and fails unless all of these exact contracts hold:
+`scripts/verify-image.mjs` reads the Dockerfile, CLI, wrapper, and supervisor and fails unless these contracts hold:
 
 ```js
 const requiredDockerTokens = [
   "FROM ghcr.io/agent37-platform/hermes:2026.08.19c",
   "NPM_CONFIG_PREFIX=/usr/local npm install -g minionsai@0.1.27",
   "COPY --chmod=0755 bin/alfi.mjs /usr/local/bin/alfi",
-  "COPY s6-rc.d/alfi-minions /etc/s6-overlay/s6-rc.d/alfi-minions",
-  "COPY s6-rc.d/user/contents.d/alfi-minions /etc/s6-overlay/s6-rc.d/user/contents.d/alfi-minions",
+  "COPY --chown=node:node --chmod=0755 bin/supervise-minions.sh /opt/alfi/bin/supervise-minions.sh",
+  "COPY --chown=node:node --chmod=0755 bin/entrypoint.sh /opt/alfi/bin/entrypoint.sh",
   "USER node",
+  'ENTRYPOINT ["/opt/alfi/bin/entrypoint.sh"]',
 ];
-const forbiddenDockerTokens = ["ENTRYPOINT", "CMD", "npm install -g minionsai@latest", "/home/node/"];
-const requiredRunTokens = [
-  "#!/command/with-contenv bash",
-  "exec s6-setuidgid node env",
-  "PORT=6969",
-  "MINIONS_HOME=/home/node/.minions",
-  "minions",
-];
+const forbiddenDockerTokens = ["AGENT37_HOOKS_DIR", "hooks/post-restart.sh", "s6-rc.d", "CMD"];
 ```
 
-It also requires the CLI verbs `list`, `show`, `create`, `move`, `delete`, the loopback base `http://127.0.0.1:6969/api`, JSON output, and `--yes` for deletion. Run `npm run verify`; expect failure because implementation files are incomplete.
+The wrapper contract requires `/opt/alfi/bin/supervise-minions.sh &` followed by `exec /usr/local/bin/entrypoint.sh`. It also retains the CLI verbs, loopback API, JSON output, and explicit delete confirmation. Run `npm run verify` and observe failure against the old hook implementation before changing production files.
 
-- [ ] **Step 3: Commit the red contract with repository scaffold**
-
-```powershell
-git add package.json scripts/verify-image.mjs
-git commit -m "test: define alfi agent image contract"
-```
-
-### Task 2: Implement the pinned image, supervised Minions service, and local task CLI
+### Task 2: Implement supported companion-service startup
 
 **Files:**
 - Modify: `alfi-agent-image/template/Dockerfile`
-- Create: `alfi-agent-image/scripts/release-agent.mjs`
-- Create: `alfi-agent-image/template/bin/alfi.mjs`
-- Create: `alfi-agent-image/template/s6-rc.d/alfi-minions/type`
-- Create: `alfi-agent-image/template/s6-rc.d/alfi-minions/run`
-- Create: `alfi-agent-image/template/s6-rc.d/user/contents.d/alfi-minions`
+- Create: `alfi-agent-image/template/bin/entrypoint.sh`
+- Retain: `alfi-agent-image/template/bin/supervise-minions.sh`
+- Delete: `alfi-agent-image/template/hooks/post-restart.sh`
+- Delete: `alfi-agent-image/template/hooks/post-image-update.sh`
 - Test: `alfi-agent-image/scripts/verify-image.mjs`
 
 **Interfaces:**
@@ -106,7 +73,7 @@ git commit -m "test: define alfi agent image contract"
 - Produces: `alfi --version` and `alfi tasks {list,show,create,move,delete}` with stable JSON stdout and non-zero error exits.
 - Produces: an explicit release helper for Agent37 cloud builds; it is not run until Task 8.
 
-- [ ] **Step 1: Implement the image without replacing the inherited entrypoint**
+- [ ] **Step 1: Implement the official wrapper pattern and preserve Hermes startup**
 
 Use this Dockerfile shape:
 
@@ -118,23 +85,22 @@ RUN NPM_CONFIG_PREFIX=/usr/local npm install -g minionsai@0.1.27 \
  && command -v minions >/dev/null \
  && npm cache clean --force
 COPY --chmod=0755 bin/alfi.mjs /usr/local/bin/alfi
-COPY s6-rc.d/alfi-minions /etc/s6-overlay/s6-rc.d/alfi-minions
-COPY s6-rc.d/user/contents.d/alfi-minions /etc/s6-overlay/s6-rc.d/user/contents.d/alfi-minions
+COPY --chown=node:node --chmod=0755 bin/supervise-minions.sh /opt/alfi/bin/supervise-minions.sh
+COPY --chown=node:node --chmod=0755 bin/entrypoint.sh /opt/alfi/bin/entrypoint.sh
 USER node
+ENTRYPOINT ["/opt/alfi/bin/entrypoint.sh"]
 ```
 
-The service `type` contains `longrun`; the `user/contents.d/alfi-minions` file is empty; the executable `run` file contains:
+The executable wrapper follows the official Agent37 example and delegates the main process back to Hermes:
 
 ```bash
-#!/command/with-contenv bash
-exec s6-setuidgid node env \
-  PORT=6969 \
-  MINIONS_HOME=/home/node/.minions \
-  HERMES_AGENT_DIR=/home/node/.hermes/hermes-agent \
-  minions
+#!/usr/bin/env bash
+set -euo pipefail
+/opt/alfi/bin/supervise-minions.sh &
+exec /usr/local/bin/entrypoint.sh
 ```
 
-- [ ] **Step 2: Implement the dependency-free CLI**
+- [ ] **Step 2: Retain the dependency-free CLI and supervisor contracts**
 
 `alfi.mjs` parses `process.argv`, calls `fetch()` against `ALFI_MINIONS_URL || "http://127.0.0.1:6969/api"`, and maps commands exactly:
 
@@ -149,7 +115,7 @@ alfi tasks delete <id> --yes            DELETE /tasks/<id>
 
 Require `description` on create, restrict status to `in_progress|in_review|done`, require `--yes` for delete, print only the upstream JSON on success, and print `{ "ok": false, "error": "..." }` to stderr with exit code `1` on transport or HTTP failure.
 
-- [ ] **Step 3: Add the explicit Agent37 cloud-build release helper**
+- [ ] **Step 3: Retain the explicit Agent37 cloud-build release helper**
 
 `scripts/release-agent.mjs` invokes the official Agent37 CLI with the fixed build context and template name:
 
@@ -185,7 +151,7 @@ git commit -m "feat: build alfi agent with minions and task cli"
 - Create: `agent37-starter-kit/scripts/verify-alfi-provisioning.mjs`
 
 **Interfaces:**
-- Consumes: published template name `alfi-agent@1` and Agent37 `POST /v1/instances/{id}/exec`.
+- Consumes: the next verified published template revision and Agent37 `POST /v1/instances/{id}/exec`.
 - Produces: an `Alfi Agent` creation card and an idempotently installed `~/.hermes/skills/alfi-task-manager/SKILL.md`.
 
 - [ ] **Step 1: Write the failing provisioning contract**
@@ -195,7 +161,7 @@ The verifier requires:
 ```js
 const requiredCatalog = [
   'id: "alfi-agent"',
-  'template: "alfi-agent@1"',
+  'template: "alfi-agent@4"',
   'label: "Alfi Agent"',
   'capabilities: ["minions"]',
 ];
@@ -212,7 +178,7 @@ Run `node scripts/verify-alfi-provisioning.mjs`; expect failure before implement
 
 - [ ] **Step 2: Add template capability helpers**
 
-Extend `AgentTypeOption` with `capabilities?: readonly ("minions")[]`. Add the `Alfi Agent` option using `alfi-agent@1`, plus:
+Extend `AgentTypeOption` with `capabilities?: readonly ("minions")[]`. Add the `Alfi Agent` option using the verified immutable revision (candidate `alfi-agent@4`), plus:
 
 ```ts
 export function templateBaseName(template?: string | null): string {
@@ -430,7 +396,7 @@ git add src/components/minions/SchedulesTab.tsx src/components/minions/useSchedu
 git commit -m "feat: add responsive alfi schedules management"
 ```
 
-### Task 8: Publish revision 1 and verify one isolated Alfi Agent instance
+### Task 8: Publish revision 4 and verify one isolated Alfi Agent instance
 
 **Files:**
 - No app source changes.
@@ -438,7 +404,7 @@ git commit -m "feat: add responsive alfi schedules management"
 
 **Interfaces:**
 - Consumes: Agent37 cloud build and instance APIs.
-- Produces: immutable workspace template `alfi-agent@1` and one isolated test instance.
+- Produces: immutable workspace template `alfi-agent@4` and one isolated test instance.
 
 - [ ] **Step 1: Publish the image**
 
@@ -448,11 +414,11 @@ Run from `alfi-agent-image` with the valid workspace key from the root `.env`, w
 npx.cmd --yes agent37 templates build template --name alfi-agent
 ```
 
-Wait for success and verify `GET /v1/templates/alfi-agent@1` returns revision `1`, an image digest, and default port `3737` or the inherited Hermes fallback.
+Wait for success and verify `GET /v1/templates/alfi-agent@4` returns revision `4`, an image digest, and default port `3737` or the inherited Hermes fallback.
 
 - [ ] **Step 2: Create one test instance**
 
-Create it with `template: "alfi-agent@1"`, normal 2 vCPU / 4 GB / 6 GB resources, metadata identifying it as the Alphi Minions test, and a bounded monthly budget. Record the instance ID without exposing credentials.
+Create it with `template: "alfi-agent@4"`, normal 2 vCPU / 4 GB / 6 GB resources, metadata identifying it as the Alphi Minions test, and a bounded monthly budget. Record the instance ID without exposing credentials.
 
 - [ ] **Step 3: Verify image runtime automatically**
 
@@ -474,7 +440,7 @@ Use `X-Agent37-Key` only in server/read-only probe headers. Do not create a publ
 - No planned source changes unless verification exposes a defect.
 
 **Interfaces:**
-- Consumes: committed `feat/alphi-minions`, image revision `alfi-agent@1`, and the existing Vercel project.
+- Consumes: committed `feat/alphi-minions`, image revision `alfi-agent@4`, and the existing Vercel project.
 - Produces: an automatically verified preview deployment; production remains on commit `69773da`.
 
 - [ ] **Step 1: Run the full automated gate**
