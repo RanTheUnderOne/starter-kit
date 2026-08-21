@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Blocks, FolderOpen, Menu, MessageSquare, Settings2, X } from "lucide-react";
+import { ArrowLeft, Blocks, FolderOpen, ListTodo, Menu, MessageSquare, Settings2, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { isTransitional } from "@/lib/format";
@@ -19,6 +19,7 @@ import { ChatProvider } from "@/components/chat/ChatProvider";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatView } from "@/components/chat/ChatView";
 import { FilesTab } from "@/components/files/FilesTab";
+import { TasksTab } from "@/components/minions/TasksTab";
 import { useMobileDrawer } from "@/components/useMobileDrawer";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ const TABS: { id: AgentTab; label: string; icon: typeof MessageSquare }[] = [
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "files", label: "Files", icon: FolderOpen },
   { id: "integrations", label: "Integrations", icon: Blocks },
+  { id: "tasks", label: "Tasks", icon: ListTodo },
   { id: "settings", label: "Settings", icon: Settings2 },
 ];
 
@@ -44,11 +46,13 @@ export function AgentWorkspace({
   workspaceId,
   role,
   initialTab,
+  minionsEnabled,
 }: {
   agentId: string;
   workspaceId: string;
   role: Role;
   initialTab: AgentTab;
+  minionsEnabled: boolean;
 }) {
   const pathname = usePathname();
   const { setCurrentId } = useWorkspace();
@@ -94,6 +98,7 @@ export function AgentWorkspace({
   const currentTab = parseAgentTab(segments.slice(3)) ?? initialTab;
   const isChat = currentTab === "chat";
   const isFiles = currentTab === "files";
+  const availableTabs = minionsEnabled ? TABS : TABS.filter((tab) => tab.id !== "tasks");
 
   function selectTab(tab: AgentTab) {
     closeMenu();
@@ -167,7 +172,7 @@ export function AgentWorkspace({
         </header>
 
         <nav aria-label="Agent workspace tabs" className="flex overflow-x-auto border-b bg-card px-2 md:hidden">
-          {TABS.map((t) => {
+          {availableTabs.map((t) => {
             const Icon = t.icon;
             const isActive = currentTab === t.id;
             return (
@@ -234,7 +239,7 @@ export function AgentWorkspace({
             </div>
 
             <nav className="mt-5 flex flex-col gap-1">
-              {TABS.map((t) => {
+              {availableTabs.map((t) => {
                 const Icon = t.icon;
                 const isActive = currentTab === t.id;
                 return (
@@ -299,6 +304,8 @@ export function AgentWorkspace({
                 <div className="mx-auto w-full max-w-5xl p-6 md:px-10 md:py-8">
                   <IntegrationsTab agentId={agentId} role={role} />
                 </div>
+              ) : currentTab === "tasks" && minionsEnabled ? (
+                <TasksTab agentId={agentId} />
               ) : (
                 <div className="mx-auto w-full max-w-3xl p-6 md:px-10 md:py-8">
                   {active ? (

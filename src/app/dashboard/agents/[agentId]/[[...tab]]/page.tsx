@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getAgentRow, requireMember, requireUser } from "@/lib/auth";
+import { isAlfiAgentTemplate } from "@/config/agents";
 import { parseAgentTab } from "@/lib/dashboard-tabs";
 import { AgentWorkspace } from "@/components/AgentWorkspace";
 
@@ -25,6 +26,7 @@ export default async function AgentWorkspacePage({
   if (!row) notFound();
   const role = await requireMember(db, row.workspace_id, user.id).catch(() => null);
   if (!role) notFound();
+  if (["tasks", "skills", "schedules"].includes(initialTab) && !isAlfiAgentTemplate(row.template)) notFound();
 
   return (
     <AgentWorkspace
@@ -32,6 +34,7 @@ export default async function AgentWorkspacePage({
       workspaceId={row.workspace_id}
       role={role}
       initialTab={initialTab}
+      minionsEnabled={isAlfiAgentTemplate(row.template)}
     />
   );
 }

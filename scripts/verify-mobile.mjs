@@ -5,17 +5,18 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const drawerHookPath = resolve(root, "src/components/useMobileDrawer.ts");
 const files = {
-  dashboard: readFileSync(resolve(root, "src/components/DashboardShell.tsx"), "utf8"),
-  workspace: readFileSync(resolve(root, "src/components/AgentWorkspace.tsx"), "utf8"),
-  agents: readFileSync(resolve(root, "src/components/AgentsView.tsx"), "utf8"),
-  members: readFileSync(resolve(root, "src/components/MembersView.tsx"), "utf8"),
-  settings: readFileSync(resolve(root, "src/components/SettingsView.tsx"), "utf8"),
-  filesView: readFileSync(resolve(root, "src/components/files/FilesView.tsx"), "utf8"),
-  chatView: readFileSync(resolve(root, "src/components/chat/ChatView.tsx"), "utf8"),
-  chatMessages: readFileSync(resolve(root, "src/components/chat/ChatMessages.tsx"), "utf8"),
-  chatSidebar: readFileSync(resolve(root, "src/components/chat/ChatSidebar.tsx"), "utf8"),
-  agentSettings: readFileSync(resolve(root, "src/components/AgentSettingsTab.tsx"), "utf8"),
-  drawerHook: existsSync(drawerHookPath) ? readFileSync(drawerHookPath, "utf8") : "",
+  dashboard: readFileSync(resolve(root, "src/components/DashboardShell.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  workspace: readFileSync(resolve(root, "src/components/AgentWorkspace.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  agents: readFileSync(resolve(root, "src/components/AgentsView.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  members: readFileSync(resolve(root, "src/components/MembersView.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  settings: readFileSync(resolve(root, "src/components/SettingsView.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  filesView: readFileSync(resolve(root, "src/components/files/FilesView.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  chatView: readFileSync(resolve(root, "src/components/chat/ChatView.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  chatMessages: readFileSync(resolve(root, "src/components/chat/ChatMessages.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  chatSidebar: readFileSync(resolve(root, "src/components/chat/ChatSidebar.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  agentSettings: readFileSync(resolve(root, "src/components/AgentSettingsTab.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  tasksTab: readFileSync(resolve(root, "src/components/minions/TasksTab.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  drawerHook: existsSync(drawerHookPath) ? readFileSync(drawerHookPath, "utf8").replace(/\r\n/g, "\n") : "",
 };
 const failures = [];
 
@@ -147,6 +148,13 @@ requireSection(
     'title={a.live_status ?? "unknown"}',
   ]
 );
+
+requireTokens("tasksTab", [
+  'className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3"',
+  "min-h-11",
+  "min-w-11",
+  "[overflow-wrap:anywhere]",
+]);
 requireTokens("members", [
   'className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"',
   'className="space-y-3 sm:hidden"',
