@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
-import type { Task, TaskResponse, TasksResponse, TaskStatus } from "@/lib/minions/types";
+import type { LiveTaskRun, Task, TaskMessage, TaskMessagesResponse, TaskResponse, TaskRunResponse, TasksResponse, TaskStatus, ToolProgressEvent } from "@/lib/minions/types";
 
 const basePath = (agentId: string) => `/api/agents/${agentId}/minions`;
 const tasksPath = (agentId: string) => `${basePath(agentId)}/tasks`;
@@ -41,6 +41,15 @@ export function useTasks(agentId: string) {
         method: "POST",
         body: JSON.stringify(input),
       });
+      try {
+        await apiFetch<TaskRunResponse>(`${tasksPath(agentId)}/${encodeURIComponent(data.task.id)}/messages`, {
+          method: "POST",
+          body: JSON.stringify({ content: input.description, settings: { mode: "goal" } }),
+        });
+      } catch (cause) {
+        await apiFetch(`${tasksPath(agentId)}/${encodeURIComponent(data.task.id)}`, { method: "DELETE" }).catch(() => undefined);
+        throw cause;
+      }
       await load();
       return data.task;
     },
@@ -80,4 +89,95 @@ export function useTasks(agentId: string) {
   );
 
   return { tasks, loading, error, load, createTask, moveTask, updateTask, deleteTask };
+}
+
+type LiveEvent =
+  | { type: "snapshot"; run: LiveTaskRun }
+  | { type: "text_delta"; content?: string }
+  | { type: "thinking_delta"; content?: string }
+  | { type: "tool_progress"; tool?: string; status?: ToolProgressEvent["status"]; duration?: number; label?: string }
+  | { type: "done"; interrupted?: boolean }
+  | { type: "error"; error?: string };
+
+export function useTaskRun(agentId: string, taskId: string | null) {
+  const [messages, setMessages] = useState<TaskMessage[]>([]);
+  const [working, setWorking] = useState(false);
+  const [tools, setTools] = useState<ToolProgressEvent[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const sourceRef = useRef<EventSource | null>(null);
+
+  const taskPath = taskId ? `${tasksPath(agentId)}/${encodeURIComponent(taskId)}` : null;
+  const loadMessages = useCallback(async () => {
+    if (!taskPath) return;
+    const data = await apiFetch<TaskMessagesResponse>(`${taskPath}/messages`);
+    setMessages(data.messages);
+  }, [taskPath]);
+
+  useEffect(() => {
+    sourceRef.current?.close();
+    setMessages([]);
+    setTools([]);
+    setWorking(false);
+    setError(null);
+    if (!taskPath) return;
+    void loadMessages().catch((cause) => setError((cause as Error).message));
+    const source = new EventSource(`${taskPath}/live`);
+    source.onmessage = (message) => {
+      try {
+        const event = JSON.parse(message.data) as LiveEvent;
+        if (event.type === "snapshot") {
+          setMessages(event.run.messages);
+          setWorking(event.run.status === "streaming");
+          setError(event.run.error ?? null);
+          const latestAssistant = [...event.run.messages].reverse().find((item) => item.role === "assistant");
+          setTools(latestAssistant?.tools ?? []);
+        } else if (event.type === "text_delta" && event.content) {
+          setMessages((current) => appendAssistantDelta(current, taskId!, event.content!));
+        } else if (event.type === "tool_progress") {
+          setTools((current) => mergeTool(current, event));
+        } else if (event.type === "done") {
+          setWorking(false);
+          setTools([]);
+          void loadMessages();
+        } else if (event.type === "error") {
+          setWorking(false);
+          setError(event.error || "Task failed.");
+        }
+      } catch { /* Ignore malformed upstream events and keep the stream open. */ }
+    };
+    sourceRef.current = source;
+    return () => source.close();
+  }, [loadMessages, taskId, taskPath]);
+
+  const send = useCallback(async (content: string) => {
+    if (!taskPath) return;
+    setError(null);
+    await apiFetch<TaskRunResponse>(`${taskPath}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ content, settings: { mode: "goal" } }),
+    });
+    setWorking(true);
+  }, [taskPath]);
+
+  const stop = useCallback(async () => {
+    if (!taskPath) return;
+    await apiFetch(`${taskPath}/interrupt`, { method: "POST" });
+  }, [taskPath]);
+
+  return { messages, working, tools, error, send, stop };
+}
+
+function appendAssistantDelta(messages: TaskMessage[], taskId: string, content: string) {
+  const next = messages.map((message) => ({ ...message }));
+  const last = next[next.length - 1];
+  if (last?.role === "assistant") last.content += content;
+  else next.push({ id: crypto.randomUUID(), task_id: taskId, role: "assistant", content, created_at: Date.now() });
+  return next;
+}
+
+function mergeTool(current: ToolProgressEvent[], event: Extract<LiveEvent, { type: "tool_progress" }>) {
+  const tool: ToolProgressEvent = { tool: event.tool ?? "tool", status: event.status ?? "running", duration: event.duration, label: event.label };
+  if (tool.status === "running") return [...current, tool];
+  const index = current.findLastIndex((item) => item.tool === tool.tool && item.status === "running");
+  return index === -1 ? [...current, tool] : current.map((item, itemIndex) => itemIndex === index ? { ...item, ...tool } : item);
 }

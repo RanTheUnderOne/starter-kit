@@ -77,6 +77,8 @@ try {
     ["GET", ["tasks"], "member"], ["POST", ["tasks"], "admin"],
     ["GET", ["tasks", "task-1"], "member"], ["PATCH", ["tasks", "task-1"], "admin"],
     ["DELETE", ["tasks", "task-1"], "admin"], ["POST", ["tasks", "task-1", "move"], "admin"],
+    ["GET", ["tasks", "task-1", "messages"], "member"], ["POST", ["tasks", "task-1", "messages"], "admin"],
+    ["GET", ["tasks", "task-1", "live"], "member"], ["POST", ["tasks", "task-1", "interrupt"], "admin"],
     ["GET", ["events"], "member"], ["GET", ["skills"], "member"],
     ["GET", ["skills", "skill-1", "content"], "member"],
     ["GET", ["skills", "registry", "search"], "member"], ["GET", ["skills", "registry", "browse"], "member"],
@@ -94,6 +96,7 @@ try {
     ["PUT", ["tasks"], null], ["GET", ["unknown"], null], ["GET", [], null],
     ["GET", ["tasks", ".."], null], ["GET", ["tasks", "."], null], ["GET", ["tasks", "%2e%2e"], null],
     ["GET", ["tasks", "part/other"], null], ["GET", ["tasks", "part\\other"], null],
+    ["DELETE", ["tasks", "task-1", "messages"], null], ["POST", ["tasks", "task-1", "live"], null],
     ["GET", ["skills", "registry", "slug"], null], ["POST", ["scheduled-tasks", "job-1", "runs"], null],
   ];
   for (const [method, path, expected] of cases) {

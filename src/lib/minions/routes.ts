@@ -18,6 +18,9 @@ export function isAllowedMinionsRoute(method: string, path: string[]): MinionsAc
     if (path.length === 1 && (method === "GET" || method === "POST")) return method === "GET" ? "member" : "admin";
     if (path.length === 2 && isIdentifier(id) && ["GET", "PATCH", "DELETE"].includes(method)) return method === "GET" ? "member" : "admin";
     if (path.length === 3 && isIdentifier(id) && action === "move" && method === "POST") return "admin";
+    if (path.length === 3 && isIdentifier(id) && action === "messages" && (method === "GET" || method === "POST")) return method === "GET" ? "member" : "admin";
+    if (path.length === 3 && isIdentifier(id) && action === "live" && method === "GET") return "member";
+    if (path.length === 3 && isIdentifier(id) && action === "interrupt" && method === "POST") return "admin";
     return null;
   }
 

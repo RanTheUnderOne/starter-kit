@@ -63,13 +63,19 @@ requireTokens("src/components/minions/useTasks.ts", hook, [
   "moveTask",
   "updateTask",
   "deleteTask",
+  "/messages",
+  "mode: \"goal\"",
 ]);
 requireTokens("src/components/minions/TasksTab.tsx", taskTab, [
   "ConfirmDialog",
   "md:grid-cols-3",
   "grid-cols-1",
   "[overflow-wrap:anywhere]",
-  "Create task",
+  "Start task",
+  "TaskRunDialog",
+  "Working...",
+  "Stop",
+  "Continue task",
 ]);
 requireTokens("src/components/AgentWorkspace.tsx", workspace, ["SkillsTab", 'id: "skills"']);
 requireTokens("src/components/minions/useSkills.ts", skillsHook, [

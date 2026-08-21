@@ -24,6 +24,35 @@ export interface TaskResponse { task: Task }
 export interface TasksResponse { tasks: Task[] }
 export interface TaskDeleteResponse { ok: true }
 
+export interface TaskMessage {
+  id: string;
+  task_id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  thinking?: string;
+  created_at: number;
+  tools?: ToolProgressEvent[];
+}
+
+export interface ToolProgressEvent {
+  tool: string;
+  status: "running" | "completed" | "error";
+  duration?: number;
+  label?: string;
+}
+
+export interface LiveTaskRun {
+  taskId: string;
+  runId: string;
+  kind: "chat" | "goal" | "compact";
+  status: "streaming" | "compacting" | "done" | "error" | "stopped";
+  messages: TaskMessage[];
+  error?: string;
+}
+
+export interface TaskMessagesResponse { messages: TaskMessage[] }
+export interface TaskRunResponse { runId: string }
+
 export interface ScheduledTaskOrigin {
   platform?: string | null;
   chat_id?: string | null;
