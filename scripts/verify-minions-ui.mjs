@@ -27,6 +27,8 @@ const hook = read("src/components/minions/useTasks.ts");
 const taskTab = read("src/components/minions/TasksTab.tsx");
 const skillsHook = read("src/components/minions/useSkills.ts");
 const skillsTab = read("src/components/minions/SkillsTab.tsx");
+const schedulesHook = read("src/components/minions/useSchedules.ts");
+const schedulesTab = read("src/components/minions/SchedulesTab.tsx");
 const mobile = read("scripts/verify-mobile.mjs");
 
 requireTokens("src/lib/dashboard-tabs.ts", tabs, ['"tasks"', '"skills"', '"schedules"']);
@@ -77,6 +79,35 @@ requireTokens("src/components/minions/SkillsTab.tsx", skillsTab, [
   "ContentDialog",
   "md:grid-cols-2",
   "grid-cols-1",
+  "min-h-11",
+  "[overflow-wrap:anywhere]",
+]);
+requireTokens("src/components/AgentWorkspace.tsx", workspace, ["SchedulesTab", 'id: "schedules"']);
+requireTokens("src/components/minions/useSchedules.ts", schedulesHook, [
+  "scheduled-tasks",
+  "createSchedule",
+  "updateSchedule",
+  "pauseSchedule",
+  "resumeSchedule",
+  "runSchedule",
+  "deleteSchedule",
+  "loadRuns",
+  "loadRunContent",
+]);
+requireTokens("src/components/minions/SchedulesTab.tsx", schedulesTab, [
+  "Create schedule",
+  "Schedule name",
+  "Schedule prompt",
+  "Schedule expression",
+  "Pause",
+  "Resume",
+  "Run now",
+  "Delete",
+  "Run history",
+  "Output",
+  "ConfirmDialog",
+  "grid-cols-1",
+  "md:grid-cols-2",
   "min-h-11",
   "[overflow-wrap:anywhere]",
 ]);

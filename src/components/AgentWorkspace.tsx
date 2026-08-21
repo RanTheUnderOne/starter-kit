@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Blocks, FolderOpen, ListTodo, Menu, MessageSquare, Settings2, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Blocks, CalendarClock, FolderOpen, ListTodo, Menu, MessageSquare, Settings2, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { isTransitional } from "@/lib/format";
@@ -21,6 +21,7 @@ import { ChatView } from "@/components/chat/ChatView";
 import { FilesTab } from "@/components/files/FilesTab";
 import { TasksTab } from "@/components/minions/TasksTab";
 import { SkillsTab } from "@/components/minions/SkillsTab";
+import { SchedulesTab } from "@/components/minions/SchedulesTab";
 import { useMobileDrawer } from "@/components/useMobileDrawer";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ const TABS: { id: AgentTab; label: string; icon: typeof MessageSquare }[] = [
   { id: "integrations", label: "Integrations", icon: Blocks },
   { id: "tasks", label: "Tasks", icon: ListTodo },
   { id: "skills", label: "Skills", icon: Sparkles },
+  { id: "schedules", label: "Schedules", icon: CalendarClock },
   { id: "settings", label: "Settings", icon: Settings2 },
 ];
 
@@ -100,7 +102,7 @@ export function AgentWorkspace({
   const currentTab = parseAgentTab(segments.slice(3)) ?? initialTab;
   const isChat = currentTab === "chat";
   const isFiles = currentTab === "files";
-  const availableTabs = minionsEnabled ? TABS : TABS.filter((tab) => tab.id !== "tasks" && tab.id !== "skills");
+  const availableTabs = minionsEnabled ? TABS : TABS.filter((tab) => tab.id !== "tasks" && tab.id !== "skills" && tab.id !== "schedules");
 
   function selectTab(tab: AgentTab) {
     closeMenu();
@@ -310,6 +312,8 @@ export function AgentWorkspace({
                 <TasksTab agentId={agentId} />
               ) : currentTab === "skills" && minionsEnabled ? (
                 <SkillsTab agentId={agentId} />
+              ) : currentTab === "schedules" && minionsEnabled ? (
+                <SchedulesTab agentId={agentId} />
               ) : (
                 <div className="mx-auto w-full max-w-3xl p-6 md:px-10 md:py-8">
                   {active ? (
