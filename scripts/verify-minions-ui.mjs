@@ -20,6 +20,19 @@ function requireTokens(path, source, tokens) {
   }
 }
 
+function requireSection(path, source, label, startToken, endToken, tokens) {
+  const start = source.indexOf(startToken);
+  const end = source.indexOf(endToken, start + startToken.length);
+  if (start === -1 || end === -1) {
+    failures.push(`${path} is missing ${label} boundaries`);
+    return;
+  }
+  const section = source.slice(start, end);
+  for (const token of tokens) {
+    if (!section.includes(token)) failures.push(`${path} is missing ${label}: ${token}`);
+  }
+}
+
 const tabs = read("src/lib/dashboard-tabs.ts");
 const page = read("src/app/dashboard/agents/[agentId]/[[...tab]]/page.tsx");
 const workspace = read("src/components/AgentWorkspace.tsx");
@@ -85,6 +98,7 @@ requireTokens("src/components/minions/SkillsTab.tsx", skillsTab, [
 requireTokens("src/components/AgentWorkspace.tsx", workspace, ["SchedulesTab", 'id: "schedules"']);
 requireTokens("src/components/minions/useSchedules.ts", schedulesHook, [
   "scheduled-tasks",
+  "?includeDisabled=true",
   "createSchedule",
   "updateSchedule",
   "pauseSchedule",
@@ -111,6 +125,18 @@ requireTokens("src/components/minions/SchedulesTab.tsx", schedulesTab, [
   "min-h-11",
   "[overflow-wrap:anywhere]",
 ]);
+requireTokens("src/components/minions/SchedulesTab.tsx", schedulesTab, [
+  "sanitizeScheduleError",
+  "throw new Error(sanitizeScheduleError(error))",
+]);
+requireSection(
+  "src/components/minions/SchedulesTab.tsx",
+  schedulesTab,
+  "schedule dialog touch controls",
+  "function ScheduleDialog",
+  "function HistoryDialog",
+  ['className="min-h-11"', "Cancel", "Save changes"]
+);
 requireTokens("scripts/verify-mobile.mjs", mobile, [
   "TasksTab.tsx",
   "md:grid-cols-3",

@@ -12,6 +12,7 @@ import type {
 } from "@/lib/minions/types";
 
 const basePath = (agentId: string) => `/api/agents/${agentId}/minions/scheduled-tasks`;
+const listPath = (agentId: string) => `${basePath(agentId)}?includeDisabled=true`;
 const schedulePath = (agentId: string, id: string) => `${basePath(agentId)}/${encodeURIComponent(id)}`;
 
 export function useSchedules(agentId: string) {
@@ -22,7 +23,7 @@ export function useSchedules(agentId: string) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<ScheduledTasksResponse>(basePath(agentId));
+      const data = await apiFetch<ScheduledTasksResponse>(listPath(agentId));
       setSchedules(data.scheduledTasks);
       setError(null);
     } catch (cause) {
