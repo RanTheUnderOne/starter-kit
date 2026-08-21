@@ -16,6 +16,7 @@ const files = {
   chatSidebar: readFileSync(resolve(root, "src/components/chat/ChatSidebar.tsx"), "utf8").replace(/\r\n/g, "\n"),
   agentSettings: readFileSync(resolve(root, "src/components/AgentSettingsTab.tsx"), "utf8").replace(/\r\n/g, "\n"),
   tasksTab: readFileSync(resolve(root, "src/components/minions/TasksTab.tsx"), "utf8").replace(/\r\n/g, "\n"),
+  skillsTab: readFileSync(resolve(root, "src/components/minions/SkillsTab.tsx"), "utf8").replace(/\r\n/g, "\n"),
   drawerHook: existsSync(drawerHookPath) ? readFileSync(drawerHookPath, "utf8").replace(/\r\n/g, "\n") : "",
 };
 const failures = [];
@@ -154,6 +155,12 @@ requireTokens("tasksTab", [
   "min-h-11",
   "min-w-11",
   "[overflow-wrap:anywhere]",
+]);
+requireTokens("skillsTab", [
+  'className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2"',
+  "min-h-11",
+  "[overflow-wrap:anywhere]",
+  "w-full",
 ]);
 requireTokens("members", [
   'className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"',

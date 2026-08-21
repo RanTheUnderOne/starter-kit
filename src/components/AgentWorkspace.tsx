@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Blocks, FolderOpen, ListTodo, Menu, MessageSquare, Settings2, X } from "lucide-react";
+import { ArrowLeft, Blocks, FolderOpen, ListTodo, Menu, MessageSquare, Settings2, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { isTransitional } from "@/lib/format";
@@ -20,6 +20,7 @@ import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatView } from "@/components/chat/ChatView";
 import { FilesTab } from "@/components/files/FilesTab";
 import { TasksTab } from "@/components/minions/TasksTab";
+import { SkillsTab } from "@/components/minions/SkillsTab";
 import { useMobileDrawer } from "@/components/useMobileDrawer";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ const TABS: { id: AgentTab; label: string; icon: typeof MessageSquare }[] = [
   { id: "files", label: "Files", icon: FolderOpen },
   { id: "integrations", label: "Integrations", icon: Blocks },
   { id: "tasks", label: "Tasks", icon: ListTodo },
+  { id: "skills", label: "Skills", icon: Sparkles },
   { id: "settings", label: "Settings", icon: Settings2 },
 ];
 
@@ -98,7 +100,7 @@ export function AgentWorkspace({
   const currentTab = parseAgentTab(segments.slice(3)) ?? initialTab;
   const isChat = currentTab === "chat";
   const isFiles = currentTab === "files";
-  const availableTabs = minionsEnabled ? TABS : TABS.filter((tab) => tab.id !== "tasks");
+  const availableTabs = minionsEnabled ? TABS : TABS.filter((tab) => tab.id !== "tasks" && tab.id !== "skills");
 
   function selectTab(tab: AgentTab) {
     closeMenu();
@@ -306,6 +308,8 @@ export function AgentWorkspace({
                 </div>
               ) : currentTab === "tasks" && minionsEnabled ? (
                 <TasksTab agentId={agentId} />
+              ) : currentTab === "skills" && minionsEnabled ? (
+                <SkillsTab agentId={agentId} />
               ) : (
                 <div className="mx-auto w-full max-w-3xl p-6 md:px-10 md:py-8">
                   {active ? (

@@ -25,6 +25,8 @@ const page = read("src/app/dashboard/agents/[agentId]/[[...tab]]/page.tsx");
 const workspace = read("src/components/AgentWorkspace.tsx");
 const hook = read("src/components/minions/useTasks.ts");
 const taskTab = read("src/components/minions/TasksTab.tsx");
+const skillsHook = read("src/components/minions/useSkills.ts");
+const skillsTab = read("src/components/minions/SkillsTab.tsx");
 const mobile = read("scripts/verify-mobile.mjs");
 
 requireTokens("src/lib/dashboard-tabs.ts", tabs, ['"tasks"', '"skills"', '"schedules"']);
@@ -53,6 +55,30 @@ requireTokens("src/components/minions/TasksTab.tsx", taskTab, [
   "grid-cols-1",
   "[overflow-wrap:anywhere]",
   "Create task",
+]);
+requireTokens("src/components/AgentWorkspace.tsx", workspace, ["SkillsTab", 'id: "skills"']);
+requireTokens("src/components/minions/useSkills.ts", skillsHook, [
+  "URLSearchParams",
+  "registry/search",
+  "registry/browse",
+  "provider: \"clawhub\"",
+  "FormData",
+  "relativePaths",
+  "Content-Type",
+  "deleteSkill",
+]);
+requireTokens("src/components/minions/SkillsTab.tsx", skillsTab, [
+  "Browse",
+  "Installed",
+  "Search skills",
+  "Install",
+  "Import skill",
+  "ConfirmDialog",
+  "ContentDialog",
+  "md:grid-cols-2",
+  "grid-cols-1",
+  "min-h-11",
+  "[overflow-wrap:anywhere]",
 ]);
 requireTokens("scripts/verify-mobile.mjs", mobile, [
   "TasksTab.tsx",
