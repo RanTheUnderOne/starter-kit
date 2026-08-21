@@ -27,7 +27,7 @@ const createRoute = read("src/app/api/agents/route.ts");
 
 requireTokens("src/config/agents.ts", agentConfig, [
   'id: "alfi-agent"',
-  'template: "alfi-agent@1"',
+  'template: "alfi-agent@4"',
   'label: "Alfi Agent"',
   'capabilities: ["minions"]',
   "templateBaseName",

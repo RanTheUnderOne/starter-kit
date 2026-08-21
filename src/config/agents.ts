@@ -51,7 +51,7 @@ export const AGENT_TYPES: AgentTypeOption[] = [
   },
   {
     id: "alfi-agent",
-    template: "alfi-agent@1",
+    template: "alfi-agent@4",
     label: "Alfi Agent",
     description: "Business agent with built-in task management.",
     capabilities: ["minions"],

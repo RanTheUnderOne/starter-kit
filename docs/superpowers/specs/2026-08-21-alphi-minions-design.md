@@ -31,7 +31,7 @@ The custom image must preserve Hermes as an operational service while also start
 ### Agent creation
 
 - The creation UI offers `Alphi Task Agent` in addition to existing agent types.
-- The type points to the version-pinned workspace template `alfi-agent@1` when that template is published.
+- The type points to the verified version-pinned workspace template `alfi-agent@4`.
 - The normal ownership mirror, default shape, budget handling, and lifecycle behavior continue to use the existing Alphi creation path.
 - Creation errors clearly distinguish an unavailable template from ordinary Agent37 errors.
 
