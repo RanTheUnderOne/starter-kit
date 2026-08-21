@@ -65,7 +65,26 @@ requireTokens("src/components/minions/useTasks.ts", hook, [
   "deleteTask",
   "/messages",
   "mode: \"goal\"",
+  "sourceRef.current",
 ]);
+requireSection(
+  "src/components/minions/useTasks.ts",
+  hook,
+  "task creation does not run before the live result view mounts",
+  "const createTask = useCallback",
+  "const moveTask = useCallback",
+  ["return data.task"]
+);
+const createTaskSection = hook.slice(hook.indexOf("const createTask = useCallback"), hook.indexOf("const moveTask = useCallback"));
+if (createTaskSection.includes("/messages")) failures.push("src/components/minions/useTasks.ts must not start execution before the live result view mounts");
+requireSection(
+  "src/components/minions/useTasks.ts",
+  hook,
+  "task send immediately shows the submitted work",
+  "const send = useCallback",
+  "const stop = useCallback",
+  ['role: "user"', "setWorking(true)"]
+);
 requireTokens("src/components/minions/TasksTab.tsx", taskTab, [
   "ConfirmDialog",
   "md:grid-cols-3",
@@ -76,6 +95,8 @@ requireTokens("src/components/minions/TasksTab.tsx", taskTab, [
   "Working...",
   "Stop",
   "Continue task",
+  "initialPrompt",
+  "run.send(initialPrompt)",
 ]);
 requireTokens("src/components/AgentWorkspace.tsx", workspace, ["SkillsTab", 'id: "skills"']);
 requireTokens("src/components/minions/useSkills.ts", skillsHook, [

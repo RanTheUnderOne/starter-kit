@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, CircleDot, Loader2, MessageSquare, Pencil, Plus, Square, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -20,7 +20,7 @@ const columns: { status: TaskStatus; label: string; empty: string }[] = [
 export function TasksTab({ agentId }: { agentId: string }) {
   const taskState = useTasks(agentId);
   const [editing, setEditing] = useState<Task | "new" | null>(null);
-  const [selected, setSelected] = useState<Task | null>(null);
+  const [selected, setSelected] = useState<{ task: Task; initialPrompt?: string } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
   const grouped = useMemo(
     () => Object.fromEntries(TASK_STATUSES.map((status) => [status, taskState.tasks.filter((task) => task.status === status)])),
@@ -53,7 +53,7 @@ export function TasksTab({ agentId }: { agentId: string }) {
               <div className="mb-3 flex items-center gap-2 px-1"><ColumnIcon status={column.status} /><h2 className="font-medium">{column.label}</h2><span className="text-sm text-muted-foreground">{grouped[column.status].length}</span></div>
               <div className="space-y-3">
                 {grouped[column.status].length === 0 ? <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">{column.empty}</p> : grouped[column.status].map((task) => (
-                  <TaskCard key={task.id} task={task} onOpen={() => setSelected(task)} onEdit={() => setEditing(task)} onDelete={() => setPendingDelete(task)} onMove={(status) => taskState.moveTask(task, status).catch(showError)} />
+                  <TaskCard key={task.id} task={task} onOpen={() => setSelected({ task })} onEdit={() => setEditing(task)} onDelete={() => setPendingDelete(task)} onMove={(status) => taskState.moveTask(task, status).catch(showError)} />
                 ))}
               </div>
             </section>
@@ -66,13 +66,13 @@ export function TasksTab({ agentId }: { agentId: string }) {
         task={editing === "new" ? null : editing}
         onOpenChange={(open) => !open && setEditing(null)}
         onSave={async (input) => {
-          if (editing === "new") setSelected(await taskState.createTask(input));
+          if (editing === "new") setSelected({ task: await taskState.createTask(input), initialPrompt: input.description });
           else if (editing) await taskState.updateTask(editing, input);
           setEditing(null);
           toast.success(editing === "new" ? "Task started" : "Task updated");
         }}
       />
-      <TaskRunDialog agentId={agentId} task={selected} onOpenChange={(open) => !open && setSelected(null)} />
+      <TaskRunDialog agentId={agentId} task={selected?.task ?? null} initialPrompt={selected?.initialPrompt} onOpenChange={(open) => !open && setSelected(null)} />
       <ConfirmDialog
         open={pendingDelete !== null}
         onOpenChange={(open) => !open && setPendingDelete(null)}
@@ -127,10 +127,19 @@ function TaskDialog({ open, task, onOpenChange, onSave }: { open: boolean; task:
   </Dialog>;
 }
 
-function TaskRunDialog({ agentId, task, onOpenChange }: { agentId: string; task: Task | null; onOpenChange: (open: boolean) => void }) {
+function TaskRunDialog({ agentId, task, initialPrompt, onOpenChange }: { agentId: string; task: Task | null; initialPrompt?: string; onOpenChange: (open: boolean) => void }) {
   const run = useTaskRun(agentId, task?.id ?? null);
   const [followUp, setFollowUp] = useState("");
   const [busy, setBusy] = useState(false);
+  const startedPromptRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!task || !initialPrompt) return;
+    const key = `${task.id}:${initialPrompt}`;
+    if (startedPromptRef.current === key) return;
+    startedPromptRef.current = key;
+    void run.send(initialPrompt).catch(showError);
+  }, [initialPrompt, run.send, task]);
 
   async function continueTask() {
     const content = followUp.trim();

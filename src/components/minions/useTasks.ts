@@ -41,15 +41,6 @@ export function useTasks(agentId: string) {
         method: "POST",
         body: JSON.stringify(input),
       });
-      try {
-        await apiFetch<TaskRunResponse>(`${tasksPath(agentId)}/${encodeURIComponent(data.task.id)}/messages`, {
-          method: "POST",
-          body: JSON.stringify({ content: input.description, settings: { mode: "goal" } }),
-        });
-      } catch (cause) {
-        await apiFetch(`${tasksPath(agentId)}/${encodeURIComponent(data.task.id)}`, { method: "DELETE" }).catch(() => undefined);
-        throw cause;
-      }
       await load();
       return data.task;
     },
@@ -150,14 +141,24 @@ export function useTaskRun(agentId: string, taskId: string | null) {
   }, [loadMessages, taskId, taskPath]);
 
   const send = useCallback(async (content: string) => {
-    if (!taskPath) return;
+    if (!taskPath || !taskId) return;
     setError(null);
-    await apiFetch<TaskRunResponse>(`${taskPath}/messages`, {
-      method: "POST",
-      body: JSON.stringify({ content, settings: { mode: "goal" } }),
-    });
     setWorking(true);
-  }, [taskPath]);
+    setMessages((current) => [
+      ...current,
+      { id: crypto.randomUUID(), task_id: taskId, role: "user", content, created_at: Date.now() },
+    ]);
+    try {
+      await apiFetch<TaskRunResponse>(`${taskPath}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ content, settings: { mode: "goal" } }),
+      });
+    } catch (cause) {
+      setWorking(false);
+      setError(cause instanceof Error ? cause.message : "Couldn't start the task.");
+      throw cause;
+    }
+  }, [taskId, taskPath]);
 
   const stop = useCallback(async () => {
     if (!taskPath) return;
