@@ -33,10 +33,24 @@ export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large 
   const { groups, defaultModel, loading } = useChatModels(agentId);
 
   useEffect(() => {
-    if (focusToken === 0) return;
+    // Keep intentional focus requests on desktop, but do not reopen the virtual
+    // keyboard when a touch device returns to the chat.
+    if (focusToken === 0 || window.matchMedia("(pointer: coarse)").matches) return;
     const frame = requestAnimationFrame(() => textareaRef.current?.focus());
     return () => cancelAnimationFrame(frame);
   }, [focusToken]);
+
+  useEffect(() => {
+    const releaseFocus = () => {
+      if (document.activeElement === textareaRef.current) textareaRef.current?.blur();
+    };
+    document.addEventListener("visibilitychange", releaseFocus);
+    window.addEventListener("pagehide", releaseFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", releaseFocus);
+      window.removeEventListener("pagehide", releaseFocus);
+    };
+  }, []);
 
   // The model switcher is a persistent control, shown once the instance reports at least one model
   // (the older metered gateway exposes a single "default"; current builds expose the full catalog).

@@ -81,6 +81,11 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
+    min-height: 100dvh;
+  }
+  textarea {
+    /* Prevent mobile browser zoom when the composer receives focus. */
+    font-size: max(16px, 1em);
   }
   /* Tailwind v4 Preflight sets buttons to `cursor: default`; restore the
      hand pointer on interactive controls (but not disabled ones). */

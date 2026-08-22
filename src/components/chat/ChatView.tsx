@@ -107,8 +107,18 @@ export function ChatView() {
         )}
       >
         {loadingHistory ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
+          <div className="flex h-full items-center justify-center px-6" role="status" aria-label="Loading conversation">
+            <div className="w-full max-w-xs rounded-2xl border border-border/70 bg-card/90 p-4 shadow-[0_14px_40px_rgb(15_23_42_/_0.10)]">
+              <div className="mb-3 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+                Loading conversation
+              </div>
+              <div className="space-y-2" aria-hidden="true">
+                <div className="h-2.5 w-3/4 animate-pulse rounded-full bg-muted" />
+                <div className="h-2.5 w-full animate-pulse rounded-full bg-muted" />
+                <div className="h-2.5 w-1/2 animate-pulse rounded-full bg-muted" />
+              </div>
+            </div>
           </div>
         ) : messages.length > 0 ? (
           <ChatMessages messages={messages} isStreaming={isStreaming} />

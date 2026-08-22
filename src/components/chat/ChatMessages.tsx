@@ -32,7 +32,7 @@ function ThinkingBlock({ content, live }: { content: string; live: boolean }) {
   const [open, setOpen] = useState(live);
   if (!content) return null;
   return (
-    <div className="mb-2">
+    <div className="mb-2 rounded-xl border border-border/60 bg-card/70 px-3 py-2 shadow-[0_8px_24px_rgb(15_23_42_/_0.06)]">
       <button
         onClick={() => setOpen(!open)}
         className="-ml-1 inline-flex items-center gap-1 rounded-md px-1 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
