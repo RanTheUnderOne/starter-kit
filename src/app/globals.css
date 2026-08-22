@@ -32,8 +32,6 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.21 0.006 285.885);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.92 0.004 286.32);
-  --primary-foreground: oklch(0.21 0.006 285.885);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.274 0.006 286.033);
@@ -74,18 +72,8 @@
 }
 
 @layer base {
-  * {
-    border-color: var(--border);
-    outline-color: var(--ring);
-  }
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-  }
-  /* Tailwind v4 Preflight sets buttons to `cursor: default`; restore the
-     hand pointer on interactive controls (but not disabled ones). */
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
-    cursor: pointer;
-  }
+  * { border-color: var(--border); outline-color: var(--ring); }
+  body { background-color: var(--background); color: var(--foreground); min-height: 100dvh; }
+  textarea { font-size: max(16px, 1em); }
+  button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
 }

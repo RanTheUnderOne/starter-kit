@@ -33,10 +33,24 @@ export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large 
   const { groups, defaultModel, loading } = useChatModels(agentId);
 
   useEffect(() => {
-    if (focusToken === 0) return;
+    // Keep intentional focus requests on desktop, but do not reopen the virtual
+    // keyboard when a touch device returns to the chat.
+    if (focusToken === 0 || window.matchMedia("(pointer: coarse)").matches) return;
     const frame = requestAnimationFrame(() => textareaRef.current?.focus());
     return () => cancelAnimationFrame(frame);
   }, [focusToken]);
+
+  useEffect(() => {
+    const releaseFocus = () => {
+      if (document.activeElement === textareaRef.current) textareaRef.current?.blur();
+    };
+    document.addEventListener("visibilitychange", releaseFocus);
+    window.addEventListener("pagehide", releaseFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", releaseFocus);
+      window.removeEventListener("pagehide", releaseFocus);
+    };
+  }, []);
 
   // The model switcher is a persistent control, shown once the instance reports at least one model
   // (the older metered gateway exposes a single "default"; current builds expose the full catalog).
@@ -120,25 +134,12 @@ export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large 
         </div>
         <div className="ml-auto flex shrink-0 items-center">
           {isStreaming ? (
-            <button
-              type="button"
-              onClick={onStop}
-              aria-label="Stop response"
-              title="Stop response"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-80"
-            >
+            <button type="button" onClick={onStop} aria-label="Stop response" title="Stop response" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-80">
               <Square className="h-3 w-3" fill="currentColor" strokeWidth={0} />
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={submit}
-              disabled={!canSend}
-              aria-label="Send message"
-              title="Send message"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-30"
-            >
-              {att.uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+            <button type="button" onClick={submit} disabled={!canSend} aria-label="Send message" title="Send message" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-30">
+              {att.uploading ? <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-background/20 shadow-inner" aria-label="Uploading"><Loader2 className="h-3.5 w-3.5 animate-spin" /></span> : <ArrowUp className="h-4 w-4" />}
             </button>
           )}
         </div>
