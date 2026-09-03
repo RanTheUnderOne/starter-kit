@@ -3,6 +3,7 @@ import { getSession, type DB } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { WorkspaceProvider } from "@/components/WorkspaceProvider";
 import type { Role, Workspace, WorkspaceWithRole } from "@/lib/types";
+import { isStaffUser } from "@/lib/staff";
 
 // Read the user's workspaces with two plain table queries joined in JS, NOT a PostgREST relationship
 // embed (`memberships?select=role,workspaces(*)`). The embed needs the memberships→workspaces
@@ -72,7 +73,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // the per-agent workspace route renders its own full-height shell and must not be wrapped in it.
   // This layer only establishes auth + the WorkspaceProvider that both branches share.
   return (
-    <WorkspaceProvider initialWorkspaces={workspaces} userEmail={user.email ?? ""}>
+    <WorkspaceProvider
+      initialWorkspaces={workspaces}
+      userEmail={user.email ?? ""}
+      isStaff={isStaffUser(user)}
+    >
       {children}
     </WorkspaceProvider>
   );

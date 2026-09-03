@@ -1,5 +1,5 @@
 import { instanceFetch } from "@/lib/agent37";
-import { requireAgentAccess } from "@/lib/auth";
+import { requireStaffAgentAccess } from "@/lib/auth";
 import { ApiError, handleError } from "@/lib/http";
 import { assertUpstreamOk } from "../../_helpers";
 
@@ -13,7 +13,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function GET(request: Request, { params }: Ctx) {
   try {
     const { id } = await params;
-    await requireAgentAccess(id, "member");
+    await requireStaffAgentAccess(id);
 
     const path = new URL(request.url).searchParams.get("path");
     const qs = path ? `?path=${encodeURIComponent(path)}` : "";

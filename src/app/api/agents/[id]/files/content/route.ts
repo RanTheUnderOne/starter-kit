@@ -1,5 +1,5 @@
 import { instanceFetch } from "@/lib/agent37";
-import { requireAgentAccess } from "@/lib/auth";
+import { requireStaffAgentAccess } from "@/lib/auth";
 import { ApiError, handleError, json } from "@/lib/http";
 import { assertUpstreamOk, requireTrimmed } from "../../_helpers";
 
@@ -14,7 +14,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function GET(request: Request, { params }: Ctx) {
   try {
     const { id } = await params;
-    await requireAgentAccess(id, "member");
+    await requireStaffAgentAccess(id);
 
     const { searchParams } = new URL(request.url);
     const qs = new URLSearchParams();
@@ -52,7 +52,7 @@ export async function GET(request: Request, { params }: Ctx) {
 export async function PUT(request: Request, { params }: Ctx) {
   try {
     const { id } = await params;
-    await requireAgentAccess(id, "admin");
+    await requireStaffAgentAccess(id);
 
     const { searchParams } = new URL(request.url);
     const path = requireTrimmed(searchParams.get("path"), "path is required");

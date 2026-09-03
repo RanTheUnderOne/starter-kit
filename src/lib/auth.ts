@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ApiError } from "@/lib/http";
 import type { AgentRow, Role } from "@/lib/types";
+import { isStaffUser } from "@/lib/staff";
 
 // `db` is the privileged service-role client (RLS bypassed). All table access in this app goes
 // through it, which makes the helpers below the authorization boundary — they replace what RLS used
@@ -62,4 +63,16 @@ export async function requireAgentAccess(agent37Id: string, access: "member" | "
   if (access === "admin") await requireAdmin(db, row.workspace_id, user.id);
   else await requireMember(db, row.workspace_id, user.id);
   return { db, user, row };
+}
+
+export async function requireStaff() {
+  const session = await requireUser();
+  if (!isStaffUser(session.user)) throw new ApiError(403, "staff_only", "Staff access required");
+  return session;
+}
+
+export async function requireStaffAgentAccess(agent37Id: string) {
+  const access = await requireAgentAccess(agent37Id, "member");
+  if (!isStaffUser(access.user)) throw new ApiError(403, "staff_only", "Staff access required");
+  return access;
 }

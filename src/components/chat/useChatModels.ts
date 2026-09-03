@@ -13,7 +13,7 @@ export interface ChatModelsState {
 
 // Loads the agent's available models (GET /v1/models) and groups them by provider for the
 // composer's model switcher. Failures degrade to an empty list (the agent default still runs).
-export function useChatModels(agentId: string): ChatModelsState {
+export function useChatModels(agentId: string, enabled = true): ChatModelsState {
   const [state, setState] = useState<ChatModelsState>({
     groups: [],
     defaultModel: null,
@@ -21,6 +21,10 @@ export function useChatModels(agentId: string): ChatModelsState {
   });
 
   useEffect(() => {
+    if (!enabled) {
+      setState({ groups: [], defaultModel: null, loading: false });
+      return;
+    }
     let cancelled = false;
     apiFetch<ModelsResponse>(`/api/agents/${agentId}/chat/models`)
       .then((res) => {
@@ -53,7 +57,7 @@ export function useChatModels(agentId: string): ChatModelsState {
     return () => {
       cancelled = true;
     };
-  }, [agentId]);
+  }, [agentId, enabled]);
 
   return state;
 }

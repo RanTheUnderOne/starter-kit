@@ -1,5 +1,5 @@
 import { agent37 } from "@/lib/agent37";
-import { requireAgentAccess } from "@/lib/auth";
+import { requireStaffAgentAccess } from "@/lib/auth";
 import { usdToMicros } from "@/lib/format";
 import { ApiError, handleError, json, readJson } from "@/lib/http";
 
@@ -8,7 +8,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function GET(_request: Request, { params }: Ctx) {
   try {
     const { id } = await params;
-    await requireAgentAccess(id, "member");
+    await requireStaffAgentAccess(id);
 
     return json(await agent37.getBudget(id));
   } catch (e) {
@@ -21,7 +21,7 @@ export async function GET(_request: Request, { params }: Ctx) {
 export async function PATCH(request: Request, { params }: Ctx) {
   try {
     const { id } = await params;
-    await requireAgentAccess(id, "admin");
+    await requireStaffAgentAccess(id);
 
     const { monthly_cap_usd } = await readJson<{ monthly_cap_usd?: number }>(request);
     if (typeof monthly_cap_usd !== "number" || !Number.isFinite(monthly_cap_usd) || monthly_cap_usd < 0) {

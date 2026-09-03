@@ -1,5 +1,5 @@
 import { agent37 } from "@/lib/agent37";
-import { requireAgentAccess } from "@/lib/auth";
+import { requireStaffAgentAccess } from "@/lib/auth";
 import { ApiError, handleError, json } from "@/lib/http";
 
 type Ctx = { params: Promise<{ id: string; action: string }> };
@@ -17,7 +17,7 @@ export async function POST(_request: Request, { params }: Ctx) {
     const fn = ACTIONS[action as keyof typeof ACTIONS];
     if (!fn) throw new ApiError(404, "not_found", `Unknown action: ${action}`);
 
-    const { db } = await requireAgentAccess(id, "admin");
+    const { db } = await requireStaffAgentAccess(id);
 
     const result = await fn(id);
     if (result.status) {

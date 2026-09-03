@@ -1,6 +1,6 @@
 import { agent37 } from "@/lib/agent37";
 import { templateAppPorts } from "@/config/agents";
-import { requireAgentAccess } from "@/lib/auth";
+import { requireStaffAgentAccess } from "@/lib/auth";
 import { ApiError, handleError, json, readJson } from "@/lib/http";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -8,7 +8,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function POST(request: Request, { params }: Ctx) {
   try {
     const { id } = await params;
-    await requireAgentAccess(id, "member");
+    await requireStaffAgentAccess(id);
 
     const { port, ttl_seconds } = await readJson<{ port?: number; ttl_seconds?: number }>(request);
     if (!port) throw new ApiError(400, "invalid_request", "port is required");

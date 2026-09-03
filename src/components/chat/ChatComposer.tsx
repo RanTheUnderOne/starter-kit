@@ -10,6 +10,8 @@ import type { ChatAttachments } from "./useChatAttachments";
 import { useChatModels } from "./useChatModels";
 import { findModel, prettyModelLabel, type ChatSettings } from "./types";
 import type { SendSettings } from "./useChat";
+import { useWorkspace } from "@/components/WorkspaceProvider";
+import { useLocale } from "@/components/LocaleProvider";
 
 interface Props {
   agentId: string;
@@ -24,13 +26,15 @@ interface Props {
 }
 
 export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large = false, focusToken = 0 }: Props) {
+  const { isStaff } = useWorkspace();
+  const { t } = useLocale();
   const [text, setText] = useState("");
   // model + provider are always chosen together (one selection); effort is independent. Group
   // them as the composer's outgoing ChatSettings so send is just `{ ...settings, files }`.
   const [settings, setSettings] = useState<ChatSettings>({ model: null, provider: null, reasoningEffort: null });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { groups, defaultModel, loading } = useChatModels(agentId);
+  const { groups, defaultModel, loading } = useChatModels(agentId, isStaff);
 
   useEffect(() => {
     // Keep intentional focus requests on desktop, but do not reopen the virtual
@@ -106,7 +110,7 @@ export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large 
         onKeyDown={onKeyDown}
         onPaste={att.handlePaste}
         rows={1}
-        placeholder="Ask anything..."
+        placeholder={t("chat.placeholder")}
         className={cn(
           "w-full resize-none bg-transparent px-5 pb-2 pt-4 text-foreground placeholder:text-muted-foreground focus:outline-none",
           large ? "min-h-[76px] max-h-[180px] text-[15px] leading-6" : "min-h-[44px] max-h-[160px] text-sm leading-relaxed"
@@ -116,7 +120,7 @@ export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large 
       <div className="flex items-center gap-2 px-3 pb-3">
         <div className="flex min-w-0 items-center gap-1.5">
           <AttachButton onFiles={att.addFiles} disabled={isStreaming} />
-          {groups.length > 0 && (
+          {isStaff && groups.length > 0 && (
             <ModelMenu
               groups={groups}
               model={settings.model}
@@ -126,11 +130,13 @@ export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large 
               onChange={(model, provider) => setSettings((s) => ({ ...s, model, provider }))}
             />
           )}
-          <EffortMenu
-            value={settings.reasoningEffort}
-            disabled={isStreaming}
-            onChange={(reasoningEffort) => setSettings((s) => ({ ...s, reasoningEffort }))}
-          />
+          {isStaff && (
+            <EffortMenu
+              value={settings.reasoningEffort}
+              disabled={isStreaming}
+              onChange={(reasoningEffort) => setSettings((s) => ({ ...s, reasoningEffort }))}
+            />
+          )}
         </div>
         <div className="ml-auto flex shrink-0 items-center">
           {isStreaming ? (

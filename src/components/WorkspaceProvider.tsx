@@ -12,6 +12,7 @@ interface WorkspaceContextValue {
   setCurrentId: (id: string) => void;
   refresh: () => Promise<WorkspaceWithRole[]>;
   userEmail: string;
+  isStaff: boolean;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -19,10 +20,12 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 export function WorkspaceProvider({
   initialWorkspaces,
   userEmail,
+  isStaff,
   children,
 }: {
   initialWorkspaces: WorkspaceWithRole[];
   userEmail: string;
+  isStaff: boolean;
   children: React.ReactNode;
 }) {
   const [workspaces, setWorkspaces] = useState<WorkspaceWithRole[]>(initialWorkspaces);
@@ -54,7 +57,7 @@ export function WorkspaceProvider({
   );
 
   return (
-    <WorkspaceContext.Provider value={{ workspaces, current, setCurrentId, refresh, userEmail }}>
+    <WorkspaceContext.Provider value={{ workspaces, current, setCurrentId, refresh, userEmail, isStaff }}>
       {children}
     </WorkspaceContext.Provider>
   );
