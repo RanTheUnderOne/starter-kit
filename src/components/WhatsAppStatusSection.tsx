@@ -12,17 +12,13 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { alfiWhatsAppTalkUrl, configuredAlfiWhatsAppDigits } from "@/lib/alfi-whatsapp-link";
 
 function connectionLabel(status: WhatsAppCustomerStatus["business"]["status"]) {
   if (status === "connected") return "Connected";
   if (status === "connecting") return "Connecting";
   if (status === "failed" || status === "revoked") return "Disconnected";
   return "Not connected";
-}
-
-function talkUrl(): string | null {
-  const digits = (process.env.NEXT_PUBLIC_ALFI_WHATSAPP_NUMBER ?? "").replace(/\D/g, "");
-  return digits ? `https://wa.me/${digits}?text=${encodeURIComponent("Hi Alfi")}` : null;
 }
 
 export function WhatsAppStatusSection({
@@ -99,7 +95,7 @@ export function WhatsAppStatusSection({
 
   const business = status?.business;
   const owner = status?.ownerChannel;
-  const url = talkUrl();
+  const url = alfiWhatsAppTalkUrl(configuredAlfiWhatsAppDigits(), t("chat.whatsappGreeting"));
 
   return (
     <div className="space-y-5">

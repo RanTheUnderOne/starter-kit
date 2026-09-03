@@ -9,6 +9,7 @@ import { branding } from "@/config/branding";
 import { MIN_PASSWORD } from "@/config/auth";
 import { publicSiteOrigin, safeNextPath } from "@/lib/site-url";
 import { toast } from "sonner";
+import { TalkToAlfiWhatsAppLink } from "@/components/TalkToAlfiWhatsAppLink";
 
 type Mode = "signin" | "signup" | "reset";
 
@@ -206,6 +207,9 @@ export default function LoginPage() {
             </div>
           </form>
         )}
+        <div className="flex justify-center pt-2">
+          <TalkToAlfiWhatsAppLink />
+        </div>
       </div>
     </main>
   );

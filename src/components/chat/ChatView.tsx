@@ -10,6 +10,8 @@ import { useChatContext } from "./ChatProvider";
 import { useChat } from "./useChat";
 import { useChatAttachments } from "./useChatAttachments";
 import { useLocale } from "@/components/LocaleProvider";
+import { TalkToAlfiWhatsAppLink } from "@/components/TalkToAlfiWhatsAppLink";
+import { agentTabPath } from "@/lib/dashboard-tabs";
 
 // The conversation pane, rendered full-height in the chat tab's main column. Empty state = a
 // centered welcome (heading + big composer + subtitle); once there are messages it becomes a
@@ -163,8 +165,9 @@ export function ChatView() {
 
       {/* Bottom: balances the vertical centering and carries the welcome subtitle. */}
       {showWelcome && (
-        <div className="flex flex-1 flex-col items-center px-4 pt-3">
+        <div className="flex flex-1 flex-col items-center gap-4 px-4 pt-3">
           <p className="text-sm text-muted-foreground">{t("chat.subtitle")}</p>
+          <TalkToAlfiWhatsAppLink fallbackHref={agentTabPath(agentId, "whatsapp")} />
         </div>
       )}
     </div>
