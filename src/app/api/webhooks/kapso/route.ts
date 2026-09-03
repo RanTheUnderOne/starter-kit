@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { kapsoWebhookSecret } from "@/lib/alfi-config";
 import { verifyKapsoSignature } from "@/lib/kapso-webhook";
 import { kapso } from "@/lib/kapso";
+import { kapsoDeletedPatch } from "@/lib/kapso-lifecycle";
 
 type ConnectionEvent = {
   phone_number_id?: string;
@@ -64,12 +65,7 @@ export async function POST(request: Request) {
   } else if (eventType === "whatsapp.phone_number.deleted") {
     const { error } = await db
       .from("agent_whatsapp_connections")
-      .update({
-        status: "revoked",
-        enabled: false,
-        phone_number_id: null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(kapsoDeletedPatch())
       .eq("kapso_customer_id", customerId);
     if (error) {
       await db.from("kapso_webhook_events").delete().eq("idempotency_key", idempotencyKey);

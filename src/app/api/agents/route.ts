@@ -6,6 +6,7 @@ import { ApiError, handleError, json, readJson } from "@/lib/http";
 import { createMcpToken, hashMcpToken } from "@/lib/mcp-auth";
 import { whatsappMcpUrl } from "@/lib/alfi-config";
 import { provisionAlfi } from "@/lib/alfi-provisioning";
+import { createdAlfiHttpStatus, isUnsupportedPublicPortError } from "@/lib/kapso-lifecycle";
 import { HERMES_WHATSAPP_PORT, HERMES_WHATSAPP_PREFIX } from "@/lib/whatsapp-router";
 import { saveOwnerPhone } from "@/lib/whatsapp-gateway";
 import type { Agent, AgentRow, MergedAgent, Template } from "@/lib/types";
@@ -143,7 +144,8 @@ export async function POST(request: Request) {
     let agent: Agent;
     try {
       agent = await agent37.createAgent(createInput);
-    } catch {
+    } catch (error) {
+      if (!isUnsupportedPublicPortError(error)) throw error;
       const { public_ports: _publicPorts, ...withoutPorts } = createInput;
       agent = await agent37.createAgent(withoutPorts);
     }
@@ -190,8 +192,12 @@ export async function POST(request: Request) {
       await saveOwnerPhone(db, agent.id, body.owner_phone);
     }
 
-    // Keep a failed instance tracked for staff retry, but never tell the customer it is ready.
-    await provisionAlfi(db, agent.id);
+    let provisioningOk = true;
+    try {
+      await provisionAlfi(db, agent.id);
+    } catch {
+      provisioningOk = false;
+    }
 
     const { data: connection } = await db
       .from("agent_whatsapp_connections")
@@ -199,7 +205,7 @@ export async function POST(request: Request) {
       .eq("agent37_id", agent.id)
       .single();
 
-    return json({ ...agent, whatsapp: connection }, 201);
+    return json({ ...agent, whatsapp: connection, incomplete: !provisioningOk }, createdAlfiHttpStatus(provisioningOk));
   } catch (e) {
     return handleError(e);
   }
