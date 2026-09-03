@@ -5,8 +5,8 @@ export function digitsFromDisplay(value: string): string {
 }
 
 export function configuredAlfiWhatsAppDigits(
-  envNumber = process.env.NEXT_PUBLIC_ALFI_WHATSAPP_NUMBER,
-  brandNumber = branding.whatsappNumber,
+  envNumber: string | undefined = process.env.NEXT_PUBLIC_ALFI_WHATSAPP_NUMBER,
+  brandNumber: string = branding.whatsappNumber,
 ): string {
   return digitsFromDisplay(brandNumber) || digitsFromDisplay(envNumber ?? "");
 }
