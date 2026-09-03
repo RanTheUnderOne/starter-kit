@@ -71,6 +71,19 @@ export interface AgentWhatsAppConnection {
 
 export type WhatsAppConnectionPublic = Omit<AgentWhatsAppConnection, "token_hash">;
 
+export interface WhatsAppCustomerStatus {
+  business: {
+    status: WhatsAppStatus;
+    displayNumber: string | null;
+    canSetup: boolean;
+    connected: boolean;
+  };
+  ownerChannel: {
+    ownerPhone: string | null;
+    ready: boolean;
+  };
+}
+
 export interface Agent {
   id: string;
   status: string;

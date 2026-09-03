@@ -1,29 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { MessageCircle, RefreshCw } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
-import type { Role, WhatsAppConnectionPublic } from "@/lib/types";
+import type { Role, WhatsAppCustomerStatus } from "@/lib/types";
+import { useLocale } from "@/components/LocaleProvider";
+import { useWorkspace } from "@/components/WorkspaceProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-function connectionLabel(status?: string | null) {
-  switch (status) {
-    case "connected":
-      return "Connected";
-    case "connecting":
-      return "Connecting";
-    case "failed":
-      return "Couldn’t connect";
-    case "revoked":
-      return "Disconnected";
-    default:
-      return "Not connected";
-  }
+function connectionLabel(status: WhatsAppCustomerStatus["business"]["status"]) {
+  if (status === "connected") return "Connected";
+  if (status === "connecting") return "Connecting";
+  if (status === "failed" || status === "revoked") return "Disconnected";
+  return "Not connected";
+}
+
+function talkUrl(): string | null {
+  const digits = (process.env.NEXT_PUBLIC_ALFI_WHATSAPP_NUMBER ?? "").replace(/\D/g, "");
+  return digits ? `https://wa.me/${digits}?text=${encodeURIComponent("Hi Alfi")}` : null;
 }
 
 export function WhatsAppStatusSection({
@@ -33,117 +32,127 @@ export function WhatsAppStatusSection({
   agentId: string;
   role: Role;
 }) {
-  const [connection, setConnection] = useState<WhatsAppConnectionPublic | null>(null);
+  const { t } = useLocale();
+  const { isStaff } = useWorkspace();
+  const [status, setStatus] = useState<WhatsAppCustomerStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmRevoke, setConfirmRevoke] = useState(false);
   const [ownerPhone, setOwnerPhone] = useState("");
   const load = useCallback(async () => {
     try {
-      const next = await apiFetch<WhatsAppConnectionPublic>(`/api/agents/${agentId}/whatsapp/status`);
-      setConnection(next);
-      setOwnerPhone(next.owner_phone_e164 ?? "");
+      const next = await apiFetch<WhatsAppCustomerStatus>(`/api/agents/${agentId}/whatsapp/status`);
+      setStatus(next);
+      setOwnerPhone(next.ownerChannel.ownerPhone ?? "");
     } catch (error) {
-      toast.error((error as Error).message);
+      toast.error((error as Error).message || t("common.error"));
     }
-  }, [agentId]);
+  }, [agentId, t]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   useEffect(() => {
-    if (connection?.status !== "connecting") return;
+    if (status?.business.status !== "connecting") return;
     const timer = setInterval(async () => {
       try {
         await apiFetch(`/api/agents/${agentId}/whatsapp/reconcile`, { method: "POST" });
         await load();
       } catch {
-        // Setup may still be waiting; keep the current state.
+        // Setup may still be waiting.
       }
     }, 4000);
     return () => clearInterval(timer);
-  }, [agentId, connection?.status, load]);
+  }, [agentId, status?.business.status, load]);
 
   async function connect() {
     setBusy(true);
     try {
-      const { url } = await apiFetch<{ url: string }>(
-        `/api/agents/${agentId}/whatsapp/setup`,
-        { method: "POST" }
-      );
+      const { url } = await apiFetch<{ url: string }>(`/api/agents/${agentId}/whatsapp/setup`, { method: "POST" });
       window.location.assign(url);
     } catch (error) {
-      toast.error((error as Error).message);
-      setBusy(false);
-    }
-  }
-
-  async function retrySetup() {
-    setBusy(true);
-    try {
-      await apiFetch(`/api/agents/${agentId}/provision`, { method: "POST" });
-      toast.success("Alfi is ready");
-      await load();
-    } catch (error) {
-      toast.error((error as Error).message);
-    } finally {
+      toast.error((error as Error).message || t("common.error"));
       setBusy(false);
     }
   }
 
   async function revoke() {
     await apiFetch(`/api/agents/${agentId}/whatsapp/revoke`, { method: "POST" });
-    toast.success("WhatsApp disconnected");
     await load();
   }
 
   async function saveNumber() {
     setBusy(true);
     try {
-      await apiFetch(`/api/agents/${agentId}/whatsapp/allowlist`, {
+      const next = await apiFetch<WhatsAppCustomerStatus>(`/api/agents/${agentId}/whatsapp/allowlist`, {
         method: "POST",
         body: JSON.stringify({ phone: ownerPhone }),
       });
-      toast.success("WhatsApp number saved");
-      await load();
+      setStatus(next);
+      setOwnerPhone(next.ownerChannel.ownerPhone ?? ownerPhone);
     } catch (error) {
-      toast.error((error as Error).message);
+      toast.error((error as Error).message || t("common.error"));
     } finally {
       setBusy(false);
     }
   }
 
-  const connected = connection?.status === "connected";
-  const badge =
-    connection?.status === "connected"
-      ? "success"
-      : connection?.status === "failed" || connection?.status === "revoked"
-        ? "destructive"
-        : "warning";
+  const business = status?.business;
+  const owner = status?.ownerChannel;
+  const url = talkUrl();
 
   return (
-    <div className="space-y-4">
-      <section className="rounded-xl border p-5">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+    <div className="space-y-5">
+      <section className="rounded-[24px] border border-teal-950/8 bg-white/70 p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
-              <MessageCircle className="h-4 w-4 text-primary" />
-            </div>
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#d9f5e8] text-teal-800">
+              <MessageCircle className="h-5 w-5" />
+            </span>
             <div>
-              <h2 className="text-sm font-semibold">Chat with Alfi on WhatsApp</h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Enter the WhatsApp number you use. Only this number can message this Alfi.
-              </p>
+              <h2 className="text-lg font-semibold text-teal-950">{t("whatsappBusinessTitle")}</h2>
+              <p className="mt-1 text-sm leading-6 text-teal-950/55">{t("whatsappBusinessBody")}</p>
             </div>
           </div>
-          <Badge variant={connection?.owner_phone_e164 ? "success" : "warning"}>
-            {connection?.owner_phone_e164 ? "Saved" : "Not set"}
+          <Badge variant={business?.connected ? "success" : "warning"}>
+            {business ? connectionLabel(business.status) : t("common.loading")}
           </Badge>
         </div>
-
+        {business?.connected && business.displayNumber && (
+          <p className="mt-4 text-sm font-medium text-teal-950">{business.displayNumber}</p>
+        )}
         {role === "admin" && (
-          <div className="mt-4 space-y-2">
-            <Label htmlFor="shared-owner-phone">Your WhatsApp number</Label>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {business?.canSetup && (
+              <Button className="rounded-full bg-teal-900 text-white hover:bg-teal-800" onClick={connect} disabled={busy}>
+                {t("whatsappBusinessTitle")}
+              </Button>
+            )}
+            {business?.connected && (
+              <Button variant="outline" className="rounded-full" onClick={() => setConfirmRevoke(true)}>
+                {t("common.delete")}
+              </Button>
+            )}
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-[24px] border border-teal-950/8 bg-white/70 p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#d9f5e8] text-teal-800">
+              <MessageCircle className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-lg font-semibold text-teal-950">{t("whatsappOwnerTitle")}</h2>
+              <p className="mt-1 text-sm leading-6 text-teal-950/55">{t("whatsappOwnerBody")}</p>
+            </div>
+          </div>
+          <Badge variant={owner?.ready ? "success" : "warning"}>{owner?.ready ? "Ready" : "Not ready"}</Badge>
+        </div>
+        {role === "admin" && (
+          <div className="mt-5 space-y-2">
+            <Label htmlFor="shared-owner-phone">{t("whatsappOwnerNumber")}</Label>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 id="shared-owner-phone"
@@ -155,77 +164,36 @@ export function WhatsAppStatusSection({
                 onChange={(event) => setOwnerPhone(event.target.value)}
                 disabled={busy}
               />
-              <Button size="sm" onClick={saveNumber} disabled={busy || !ownerPhone.trim()}>
-                {busy ? "Saving..." : "Save"}
+              <Button className="rounded-full" onClick={saveNumber} disabled={busy || !ownerPhone.trim()}>
+                {t("common.save")}
               </Button>
             </div>
           </div>
         )}
+        {owner?.ready && url && (
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-5 inline-flex h-11 items-center rounded-full bg-teal-900 px-5 text-sm font-semibold text-white hover:bg-teal-800"
+          >
+            {t("whatsappOpen")}
+          </a>
+        )}
+        {isStaff && status && !owner?.ready && (
+          <p className="mt-4 text-xs text-teal-950/45">Owner routing is not confirmed ready.</p>
+        )}
       </section>
 
-      <section className="rounded-xl border p-5">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
-              <MessageCircle className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold">Customer WhatsApp</h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Connect your business WhatsApp so Alfi can help with customer chats.
-              </p>
-            </div>
-          </div>
-          <Badge variant={badge}>{connectionLabel(connection?.status)}</Badge>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          {connected && (
-            <p className="text-sm font-medium">
-              {connection.display_phone_number || "Connected"}
-            </p>
-          )}
-          {connection?.provisioning_status === "failed" && (
-            <p className="text-sm text-destructive">
-              Alfi couldn’t finish setup. Try again before using WhatsApp.
-            </p>
-          )}
-          {role === "admin" && (
-            <div className="flex flex-wrap gap-2">
-              {!connected && (
-                <Button size="sm" onClick={connect} disabled={busy}>
-                  {connection?.status === "connecting"
-                    ? "Continue setup"
-                    : connection?.status === "revoked"
-                      ? "Reconnect WhatsApp"
-                      : "Connect WhatsApp"}
-                </Button>
-              )}
-              {connection?.provisioning_status === "failed" && (
-                <Button size="sm" variant="outline" onClick={retrySetup} disabled={busy}>
-                  <RefreshCw className="h-4 w-4" />
-                  Try again
-                </Button>
-              )}
-              {connected && (
-                <Button size="sm" variant="outline" onClick={() => setConfirmRevoke(true)}>
-                  Disconnect
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-
-        <ConfirmDialog
-          open={confirmRevoke}
-          onOpenChange={setConfirmRevoke}
-          title="Disconnect WhatsApp?"
-          description="Alfi will stop helping with this business number. You can connect it again later."
-          confirmText="Disconnect"
-          destructive
-          onConfirm={revoke}
-        />
-      </section>
+      <ConfirmDialog
+        open={confirmRevoke}
+        onOpenChange={setConfirmRevoke}
+        title={t("whatsappBusinessTitle")}
+        description={t("whatsappBusinessBody")}
+        confirmText={t("common.delete")}
+        destructive
+        onConfirm={revoke}
+      />
     </div>
   );
 }
