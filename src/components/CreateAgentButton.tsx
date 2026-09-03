@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -90,47 +91,46 @@ export function CreateAgentButton({
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{agentId ? "Connect WhatsApp Business?" : "Create Alfi"}</DialogTitle>
+            <DialogTitle>{agentId ? "Add WhatsApp?" : "Create Alfi"}</DialogTitle>
+            <DialogDescription>
+              {agentId
+                ? "Alfi can also help with customer chats on your business WhatsApp. You can skip this and add it later."
+                : "Alfi is your business assistant. We’ll set it up so you can start chatting right away."}
+            </DialogDescription>
           </DialogHeader>
 
           {agentId ? (
-            <div className="rounded-lg border p-4">
+            <div className="rounded-xl border bg-muted/40 p-4">
               <div className="flex items-start gap-3">
-                <MessageCircle className="mt-0.5 h-5 w-5 text-primary" />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-background">
+                  <MessageCircle className="h-4 w-4 text-primary" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium">Use your existing business number</p>
+                  <p className="text-sm font-medium">Keep using WhatsApp as usual</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Keep using the WhatsApp Business app while Alfi securely reads and manages
-                    conversations when you ask. You can also connect later in Settings.
+                    Connect your business number when you’re ready. Alfi only helps when you ask.
                   </p>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                We&apos;ll create your private Hermes instance, install Alfi&apos;s business
-                skills, and connect its per-instance Composio tools.
+            <div className="space-y-2">
+              <Label htmlFor="owner-phone">Your WhatsApp number</Label>
+              <Input
+                id="owner-phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="972501234567"
+                value={ownerPhone}
+                onChange={(event) => setOwnerPhone(event.target.value)}
+                disabled={busy}
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional. This is how Alfi knows it’s you. You can add it later.
               </p>
-              <div className="space-y-2">
-                <Label htmlFor="owner-phone">Your WhatsApp number</Label>
-                <Input
-                  id="owner-phone"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  placeholder="+972501234567"
-                  value={ownerPhone}
-                  onChange={(event) => setOwnerPhone(event.target.value)}
-                  disabled={busy}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Optional. Only this number can message this Alfi on the shared Alfi WhatsApp
-                  line. You can set or change it later in Settings.
-                </p>
-              </div>
             </div>
           )}
 
@@ -138,7 +138,7 @@ export function CreateAgentButton({
             {agentId ? (
               <>
                 <Button variant="outline" onClick={finish} disabled={busy}>
-                  Connect later
+                  Not now
                 </Button>
                 <Button onClick={connectWhatsApp} disabled={busy}>
                   {busy ? "Opening..." : "Connect WhatsApp"}
@@ -150,7 +150,7 @@ export function CreateAgentButton({
                   Cancel
                 </Button>
                 <Button onClick={create} disabled={busy}>
-                  {busy ? "Installing Alfi..." : "Create Alfi"}
+                  {busy ? "Setting up..." : "Create Alfi"}
                 </Button>
               </>
             )}

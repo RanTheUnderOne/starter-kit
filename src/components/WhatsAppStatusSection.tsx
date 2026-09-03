@@ -11,6 +11,21 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+function connectionLabel(status?: string | null) {
+  switch (status) {
+    case "connected":
+      return "Connected";
+    case "connecting":
+      return "Connecting";
+    case "failed":
+      return "Couldn’t connect";
+    case "revoked":
+      return "Disconnected";
+    default:
+      return "Not connected";
+  }
+}
+
 export function WhatsAppStatusSection({
   agentId,
   role,
@@ -43,7 +58,7 @@ export function WhatsAppStatusSection({
         await apiFetch(`/api/agents/${agentId}/whatsapp/reconcile`, { method: "POST" });
         await load();
       } catch {
-        // Setup may still be waiting for Meta; keep the current state.
+        // Setup may still be waiting; keep the current state.
       }
     }, 4000);
     return () => clearInterval(timer);
@@ -63,11 +78,11 @@ export function WhatsAppStatusSection({
     }
   }
 
-  async function retryProvisioning() {
+  async function retrySetup() {
     setBusy(true);
     try {
       await apiFetch(`/api/agents/${agentId}/provision`, { method: "POST" });
-      toast.success("Alfi provisioning completed");
+      toast.success("Alfi is ready");
       await load();
     } catch (error) {
       toast.error((error as Error).message);
@@ -78,18 +93,18 @@ export function WhatsAppStatusSection({
 
   async function revoke() {
     await apiFetch(`/api/agents/${agentId}/whatsapp/revoke`, { method: "POST" });
-    toast.success("WhatsApp access revoked");
+    toast.success("WhatsApp disconnected");
     await load();
   }
 
-  async function saveAllowlist() {
+  async function saveNumber() {
     setBusy(true);
     try {
       await apiFetch(`/api/agents/${agentId}/whatsapp/allowlist`, {
         method: "POST",
         body: JSON.stringify({ phone: ownerPhone }),
       });
-      toast.success("Shared Alfi number allowlist saved");
+      toast.success("WhatsApp number saved");
       await load();
     } catch (error) {
       toast.error((error as Error).message);
@@ -108,68 +123,71 @@ export function WhatsAppStatusSection({
 
   return (
     <div className="space-y-4">
-      <section className="rounded-lg border p-5">
+      <section className="rounded-xl border p-5">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
           <div className="flex items-start gap-3">
-            <MessageCircle className="mt-0.5 h-5 w-5 text-primary" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
+              <MessageCircle className="h-4 w-4 text-primary" />
+            </div>
             <div>
-              <h2 className="text-sm font-semibold">Shared Alfi number</h2>
+              <h2 className="text-sm font-semibold">Chat with Alfi on WhatsApp</h2>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                Message Alfi on the shared business line. Only this owner WhatsApp number is
-                allowed to talk to this agent.
+                Enter the WhatsApp number you use. Only this number can message this Alfi.
               </p>
             </div>
           </div>
           <Badge variant={connection?.owner_phone_e164 ? "success" : "warning"}>
-            {connection?.owner_phone_e164 ? "allowlisted" : "not set"}
+            {connection?.owner_phone_e164 ? "Saved" : "Not set"}
           </Badge>
         </div>
 
         {role === "admin" && (
           <div className="mt-4 space-y-2">
-            <Label htmlFor="shared-owner-phone">Owner WhatsApp number</Label>
+            <Label htmlFor="shared-owner-phone">Your WhatsApp number</Label>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 id="shared-owner-phone"
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
-                placeholder="+972501234567"
+                placeholder="972501234567"
                 value={ownerPhone}
                 onChange={(event) => setOwnerPhone(event.target.value)}
                 disabled={busy}
               />
-              <Button size="sm" onClick={saveAllowlist} disabled={busy || !ownerPhone.trim()}>
-                {busy ? "Saving..." : "Save number"}
+              <Button size="sm" onClick={saveNumber} disabled={busy || !ownerPhone.trim()}>
+                {busy ? "Saving..." : "Save"}
               </Button>
             </div>
           </div>
         )}
       </section>
 
-      <section className="rounded-lg border p-5">
+      <section className="rounded-xl border p-5">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
           <div className="flex items-start gap-3">
-            <MessageCircle className="mt-0.5 h-5 w-5 text-primary" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
+              <MessageCircle className="h-4 w-4 text-primary" />
+            </div>
             <div>
-              <h2 className="text-sm font-semibold">Your WhatsApp Business</h2>
+              <h2 className="text-sm font-semibold">Customer WhatsApp</h2>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                Alfi&apos;s private, tenant-scoped access to this agent&apos;s business number.
+                Connect your business WhatsApp so Alfi can help with customer chats.
               </p>
             </div>
           </div>
-          <Badge variant={badge}>{connection?.status?.replace("_", " ") ?? "loading"}</Badge>
+          <Badge variant={badge}>{connectionLabel(connection?.status)}</Badge>
         </div>
 
         <div className="mt-4 space-y-3">
           {connected && (
-            <p className="font-mono text-sm">
-              {connection.display_phone_number || "Connected number"}
+            <p className="text-sm font-medium">
+              {connection.display_phone_number || "Connected"}
             </p>
           )}
           {connection?.provisioning_status === "failed" && (
             <p className="text-sm text-destructive">
-              Alfi&apos;s skills could not be installed. Retry provisioning before using WhatsApp.
+              Alfi couldn’t finish setup. Try again before using WhatsApp.
             </p>
           )}
           {role === "admin" && (
@@ -177,21 +195,21 @@ export function WhatsAppStatusSection({
               {!connected && (
                 <Button size="sm" onClick={connect} disabled={busy}>
                   {connection?.status === "connecting"
-                    ? "Resume setup"
+                    ? "Continue setup"
                     : connection?.status === "revoked"
                       ? "Reconnect WhatsApp"
                       : "Connect WhatsApp"}
                 </Button>
               )}
               {connection?.provisioning_status === "failed" && (
-                <Button size="sm" variant="outline" onClick={retryProvisioning} disabled={busy}>
+                <Button size="sm" variant="outline" onClick={retrySetup} disabled={busy}>
                   <RefreshCw className="h-4 w-4" />
-                  Retry provisioning
+                  Try again
                 </Button>
               )}
               {connected && (
                 <Button size="sm" variant="outline" onClick={() => setConfirmRevoke(true)}>
-                  Revoke access
+                  Disconnect
                 </Button>
               )}
             </div>
@@ -201,9 +219,9 @@ export function WhatsAppStatusSection({
         <ConfirmDialog
           open={confirmRevoke}
           onOpenChange={setConfirmRevoke}
-          title="Revoke WhatsApp access?"
-          description="Alfi will immediately lose access to this number. You can reconnect later."
-          confirmText="Revoke access"
+          title="Disconnect WhatsApp?"
+          description="Alfi will stop helping with this business number. You can connect it again later."
+          confirmText="Disconnect"
           destructive
           onConfirm={revoke}
         />
