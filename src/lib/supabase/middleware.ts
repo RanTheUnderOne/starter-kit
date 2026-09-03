@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/auth") ||
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/invite") ||
-    pathname.startsWith("/api/webhooks/kapso") ||
+    pathname.startsWith("/api/webhooks/") ||
     pathname.startsWith("/api/mcp/whatsapp");
 
   if (!user && !isPublic) {

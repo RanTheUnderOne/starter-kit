@@ -31,3 +31,20 @@ export function alfiPublicUrl() {
 export function whatsappMcpUrl() {
   return `${alfiPublicUrl()}/api/mcp/whatsapp`;
 }
+
+export function metaAppSecret() {
+  return required("META_APP_SECRET");
+}
+
+export function metaVerifyToken() {
+  return required("META_VERIFY_TOKEN");
+}
+
+export function whatsappCloudConfig() {
+  const phoneNumberId = process.env.WHATSAPP_CLOUD_PHONE_NUMBER_ID?.trim();
+  const accessToken = process.env.WHATSAPP_CLOUD_ACCESS_TOKEN?.trim();
+  const appSecret = process.env.META_APP_SECRET?.trim();
+  const verifyToken = process.env.META_VERIFY_TOKEN?.trim();
+  if (!phoneNumberId || !accessToken || !appSecret || !verifyToken) return null;
+  return { phoneNumberId, accessToken, appSecret, verifyToken };
+}
