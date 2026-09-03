@@ -12,6 +12,10 @@ describe("staff authorization", () => {
     expect(isStaffUser(user({ app_metadata: {} }), "")).toBe(false);
   });
 
+  test("product staff allowlist grants ran547830@gmail.com", () => {
+    expect(isStaffUser(user({ email: "Ran547830@gmail.com" }), "")).toBe(true);
+  });
+
   test("server allowlist matching is exact and case insensitive", () => {
     const allowlist = "ops@alfi.ai, support@alfi.ai";
     expect(isStaffUser(user({ email: "OPS@ALFI.AI" }), allowlist)).toBe(true);

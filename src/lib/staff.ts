@@ -1,3 +1,5 @@
+import { STAFF_EMAILS } from "../config/staff";
+
 type StaffCandidate = {
   app_metadata?: Record<string, unknown> | null;
   email?: string | null;
@@ -12,11 +14,9 @@ export function isStaffUser(
   const email = user.email?.trim().toLowerCase();
   if (!email) return false;
   const allowed = new Set(
-    staffEmails
-      .split(",")
+    [...STAFF_EMAILS, ...staffEmails.split(",")]
       .map((entry) => entry.trim().toLowerCase())
       .filter(Boolean),
   );
   return allowed.has(email);
 }
-

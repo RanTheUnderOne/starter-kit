@@ -35,7 +35,7 @@ Run the SQL in `supabase/migrations/` in order, starting with `0001_init.sql`. `
 
 ## Staff
 
-Grant staff with verified Supabase `app_metadata.alfi_role = staff` or an exact email in `ALFI_STAFF_EMAILS`. Workspace admin is not staff.
+Grant staff with verified Supabase `app_metadata.alfi_role = staff`, an exact email in `src/config/staff.ts`, or `ALFI_STAFF_EMAILS`. Workspace admin is not staff.
 
 ## Cron
 
