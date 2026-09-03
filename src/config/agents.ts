@@ -36,17 +36,11 @@ export interface AgentTypeOption {
 // add an entry here whose `template` is that template's name.
 export const AGENT_TYPES: AgentTypeOption[] = [
   {
-    id: "hermes",
+    id: "alfi",
     template: "agent37-hermes",
-    label: "Hermes",
-    description: "General agent: chat, browsing, code, files.",
+    label: "Alfi Business Agent",
+    description: "Your Hebrew-first sales and lead operations partner.",
     recommended: true,
-  },
-  {
-    id: "openclaw",
-    template: "agent37-openclaw",
-    label: "OpenClaw",
-    description: "General agent: headless browser, code, files.",
   },
 ];
 

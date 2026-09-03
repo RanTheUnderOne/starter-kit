@@ -7,6 +7,19 @@ This app runs on two secrets you supply (both behind a login, so a human must fe
   wallet returns a `402` at create time.
 - **`SUPABASE_ACCESS_TOKEN`** (`sbp_…`) — [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens) (~30s).
 
+The Alfi WhatsApp build also requires these production-only server values:
+
+- `KAPSO_API_KEY` — one Kapso project key kept only by the website.
+- `KAPSO_PROJECT_WEBHOOK_SECRET` — a random secret shared with the Kapso project webhook.
+- `ALFI_MCP_TOKEN_PEPPER` — a separate random 32+ byte secret used to hash per-agent tokens.
+- `ALFI_PUBLIC_URL` — the stable HTTPS origin of this website.
+
+In Kapso, create a project webhook pointing to
+`$ALFI_PUBLIC_URL/api/webhooks/kapso`, use `KAPSO_PROJECT_WEBHOOK_SECRET`, and
+subscribe to `whatsapp.phone_number.created` and
+`whatsapp.phone_number.deleted`. Never put the Kapso project key in an Agent37
+instance: each instance receives only its own scoped MCP token.
+
 `npm run setup` does everything else: creates a free Supabase project (or configures the one
 whose URL you paste into `NEXT_PUBLIC_SUPABASE_URL`), runs the migration, enables email auth,
 and writes the Supabase URL, anon key, and **server-only service-role key** back into
@@ -81,7 +94,8 @@ backend or register your sign-in URLs. Run setup locally once first, then:
 2. Push your fork to GitHub, then in Vercel: **Add New → Project → Import Git Repository**.
 3. Add **only these** env vars: `AGENT37_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`,
    `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server-only — the runtime needs
-   it for all DB access), `NEXT_PUBLIC_SITE_URL` (your prod URL).
+ it for all DB access), `NEXT_PUBLIC_SITE_URL` (your prod URL), `KAPSO_API_KEY`,
+ `KAPSO_PROJECT_WEBHOOK_SECRET`, `ALFI_MCP_TOKEN_PEPPER`, and `ALFI_PUBLIC_URL`.
    **Never add** `SUPABASE_ACCESS_TOKEN` — it's setup-only (used to create/configure the project,
    never at runtime).
    (Branding is code-side now — edit `src/config/branding.ts`, not env.)

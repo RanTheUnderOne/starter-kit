@@ -1,0 +1,26 @@
+# Alfi Master Agent — Runtime Configuration
+#
+# This file defines the integrations (MCP servers) Alfi needs to operate as the
+# business's digital sales & lead operations employee. Secrets are NEVER written
+# here — they are injected as environment variables (see ENVIRONMENT.md).
+
+mcp_servers:
+
+  # ── WhatsApp Business ─────────────────────────────────────────────────
+  # Tenant-scoped Kapso gateway hosted by the Alfi website.
+  # The token is unique to this Agent37 instance and is never stored in this file.
+  alfi_whatsapp:
+    url: "${ALFI_WHATSAPP_MCP_URL}"
+    headers:
+      Authorization: "Bearer ${ALFI_WHATSAPP_MCP_TOKEN}"
+    enabled: true
+
+  # ── CRM + Email + 250+ apps (Fireberry, Gmail, …) ─────────────────────
+  # Managed Composio MCP, injected by the Agent37 platform at container boot.
+  # Uses the rotating per-instance token — always reference the env var, never
+  # bake the literal value (it rotates on every restart).
+  composio:
+    url: "${AGENT37_COMPOSIO_MCP_URL}"
+    headers:
+      Authorization: "Bearer ${AGENT37_MANAGED_TOKEN}"
+    enabled: true

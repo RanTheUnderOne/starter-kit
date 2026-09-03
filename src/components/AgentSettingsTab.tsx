@@ -13,6 +13,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { OpenPortButtons } from "@/components/OpenPortButtons";
 import { useAsyncAction } from "@/components/useAsyncAction";
 import { cn } from "@/lib/utils";
+import { WhatsAppStatusSection } from "@/components/WhatsAppStatusSection";
 
 // The agent's overview/manage tab: a clean header (inline-rename name, status + shape + template
 // badges, and lifecycle actions as icon buttons) over app shortcuts and a read-only budget + usage
@@ -100,6 +101,7 @@ export function AgentSettingsTab({
       </header>
 
       <AppsSection agentId={agentId} agent={agent} />
+      <WhatsAppStatusSection agentId={agentId} role={role} />
       <BudgetSection agentId={agentId} />
 
       <ConfirmDialog

@@ -137,6 +137,14 @@ export interface CreateAgentInput {
   name?: string;
   metadata?: Record<string, unknown>;
   budget?: { monthly_cap_micros?: number; credit_micros?: number };
+  env?: Record<string, string>;
+}
+
+export interface ExecResult {
+  exit_code: number;
+  stdout: string;
+  stderr: string;
+  truncated: boolean;
 }
 
 export interface ResizeInput {
@@ -150,6 +158,24 @@ export const agent37 = {
   getAgent: (id: string) => call<Agent>(`/instances/${id}`),
   createAgent: (body: CreateAgentInput) =>
     call<Agent>("/instances", { method: "POST", body: JSON.stringify(body) }),
+  exec: async (id: string, command: string) => {
+    const result = await call<ExecResult>(`/instances/${id}/exec`, {
+      method: "POST",
+      body: JSON.stringify({ command }),
+    });
+    if (result.exit_code !== 0) {
+      throw new Agent37Error(
+        502,
+        "exec_failed",
+        result.stderr.trim() || `Provisioning command exited with ${result.exit_code}`
+      );
+    }
+    return result;
+  },
+  health: async (id: string) => {
+    const response = await instanceFetch(id, "/v1/health");
+    return parseAgent37<{ ok: boolean; healthy: boolean; agent?: string }>(response);
+  },
   deleteAgent: (id: string) =>
     call<{ id: string; deleted: boolean }>(`/instances/${id}`, { method: "DELETE" }),
 

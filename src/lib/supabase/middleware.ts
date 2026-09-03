@@ -35,7 +35,9 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/reset-password") ||
-    pathname.startsWith("/invite");
+    pathname.startsWith("/invite") ||
+    pathname.startsWith("/api/webhooks/kapso") ||
+    pathname.startsWith("/api/mcp/whatsapp");
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

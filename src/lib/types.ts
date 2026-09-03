@@ -39,6 +39,36 @@ export interface AgentRow {
   created_at: string;
 }
 
+export type WhatsAppStatus =
+  | "not_connected"
+  | "connecting"
+  | "connected"
+  | "revoked"
+  | "failed";
+
+export type ProvisioningStatus = "pending" | "running" | "ready" | "failed";
+
+export interface AgentWhatsAppConnection {
+  agent37_id: string;
+  workspace_id: string;
+  token_hash: string;
+  enabled: boolean;
+  status: WhatsAppStatus;
+  provisioning_status: ProvisioningStatus;
+  provisioning_error: string | null;
+  kapso_customer_id: string | null;
+  kapso_setup_link_id: string | null;
+  phone_number_id: string | null;
+  business_account_id: string | null;
+  display_phone_number: string | null;
+  setup_expires_at: string | null;
+  connected_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type WhatsAppConnectionPublic = Omit<AgentWhatsAppConnection, "token_hash">;
+
 export interface Agent {
   id: string;
   status: string;

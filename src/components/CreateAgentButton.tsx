@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { MessageCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
-import { AGENT_TYPES } from "@/config/agents";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,9 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-const DEFAULT_TEMPLATE =
-  AGENT_TYPES.find((a) => a.recommended)?.template ?? AGENT_TYPES[0].template;
 
 export function CreateAgentButton({
   workspaceId,
@@ -27,17 +23,18 @@ export function CreateAgentButton({
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [template, setTemplate] = useState(DEFAULT_TEMPLATE);
+  const [agentId, setAgentId] = useState<string | null>(null);
+  const router = useRouter();
 
   async function create() {
     setBusy(true);
     try {
-      await apiFetch("/api/agents", {
+      const agent = await apiFetch<{ id: string }>("/api/agents", {
         method: "POST",
-        body: JSON.stringify({ workspace_id: workspaceId, template }),
+        body: JSON.stringify({ workspace_id: workspaceId }),
       });
-      toast.success("Agent is provisioning");
-      setOpen(false);
+      setAgentId(agent.id);
+      toast.success("Alfi is ready");
       onCreated();
     } catch (e) {
       toast.error((e as Error).message);
@@ -46,59 +43,88 @@ export function CreateAgentButton({
     }
   }
 
+  async function connectWhatsApp() {
+    if (!agentId) return;
+    setBusy(true);
+    try {
+      const { url } = await apiFetch<{ url: string }>(
+        `/api/agents/${agentId}/whatsapp/setup`,
+        { method: "POST" }
+      );
+      window.location.assign(url);
+    } catch (e) {
+      toast.error((e as Error).message);
+      setBusy(false);
+    }
+  }
+
+  function finish() {
+    if (!agentId) return;
+    setAgentId(null);
+    setOpen(false);
+    router.push(`/dashboard/agents/${agentId}/settings`);
+  }
+
   return (
     <>
       <Button onClick={() => setOpen(true)}>
         <Plus className="h-4 w-4" />
-        Create agent
+        Create Alfi
       </Button>
 
-      <Dialog open={open} onOpenChange={(o) => !busy && setOpen(o)}>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (busy) return;
+          setOpen(next);
+          if (!next) setAgentId(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create agent</DialogTitle>
+            <DialogTitle>{agentId ? "Connect WhatsApp Business?" : "Create Alfi"}</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Agent type</p>
-            <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label="Agent type">
-              {AGENT_TYPES.map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setTemplate(a.template)}
-                  aria-pressed={template === a.template}
-                  className={cn(
-                    "rounded-lg border bg-background p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    template === a.template
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                      : "border-border hover:bg-accent/40",
-                    busy ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium leading-none">{a.label}</p>
-                    {a.recommended && (
-                      <span className="text-xs text-muted-foreground">Recommended</span>
-                    )}
-                    {template === a.template && (
-                      <Check className="ml-auto h-4 w-4 shrink-0 text-primary" />
-                    )}
-                  </div>
-                  <p className="mt-1.5 text-xs text-muted-foreground">{a.description}</p>
-                </button>
-              ))}
+          {agentId ? (
+            <div className="rounded-lg border p-4">
+              <div className="flex items-start gap-3">
+                <MessageCircle className="mt-0.5 h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-sm font-medium">Use your existing business number</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Keep using the WhatsApp Business app while Alfi securely reads and manages
+                    conversations when you ask. You can also connect later in Settings.
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              We&apos;ll create your private Hermes instance, install Alfi&apos;s business
+              skills, and connect its per-instance Composio tools.
+            </p>
+          )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>
-              Cancel
-            </Button>
-            <Button onClick={create} disabled={busy}>
-              {busy ? "Creating..." : "Create agent"}
-            </Button>
+            {agentId ? (
+              <>
+                <Button variant="outline" onClick={finish} disabled={busy}>
+                  Connect later
+                </Button>
+                <Button onClick={connectWhatsApp} disabled={busy}>
+                  {busy ? "Opening..." : "Connect WhatsApp"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>
+                  Cancel
+                </Button>
+                <Button onClick={create} disabled={busy}>
+                  {busy ? "Installing Alfi..." : "Create Alfi"}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

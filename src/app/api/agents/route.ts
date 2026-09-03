@@ -3,6 +3,9 @@ import { requireAdmin, requireMember, requireUser } from "@/lib/auth";
 import { AGENT_TEMPLATES, DEFAULT_AGENT, templateAppPorts } from "@/config/agents";
 import { usdToMicros } from "@/lib/format";
 import { ApiError, handleError, json, readJson } from "@/lib/http";
+import { createMcpToken, hashMcpToken } from "@/lib/mcp-auth";
+import { whatsappMcpUrl } from "@/lib/alfi-config";
+import { provisionAlfi } from "@/lib/alfi-provisioning";
 import type { Agent, AgentRow, MergedAgent, Template } from "@/lib/types";
 
 // The image catalog barely changes, but the dashboard polls this route every 5s while any agent is
@@ -105,8 +108,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { db, user } = await requireUser();
-    // Shape is fixed server-side (DEFAULT_AGENT); the client picks the workspace and agent type.
-    const body = await readJson<{ workspace_id?: string; template?: string }>(request);
+    // Shape and template are fixed server-side; every instance is an Alfi Hermes agent.
+    const body = await readJson<{ workspace_id?: string }>(request);
 
     const workspaceId = body.workspace_id;
     if (!workspaceId) throw new ApiError(400, "invalid_request", "workspace_id is required");
@@ -115,10 +118,10 @@ export async function POST(request: Request) {
     // Paywall/entitlement seam: a fork can gate agent creation here, e.g.
     // if (!(await canCreateAgent(db, workspaceId))) throw new ApiError(403, "forbidden", "Agent creation is not enabled for this workspace.");
 
-    const template =
-      body.template && AGENT_TEMPLATES.includes(body.template)
-        ? body.template
-        : await resolveTemplate();
+    const template = AGENT_TEMPLATES.includes(DEFAULT_AGENT.template)
+      ? DEFAULT_AGENT.template
+      : await resolveTemplate();
+    const mcpToken = createMcpToken();
 
     const agent = await agent37.createAgent({
       template,
@@ -130,19 +133,25 @@ export async function POST(request: Request) {
       user: user.id,
       metadata: { app_workspace: workspaceId },
       budget: { monthly_cap_micros: usdToMicros(DEFAULT_AGENT.monthlyCapUsd) },
+      env: {
+        ALFI_WHATSAPP_MCP_TOKEN: mcpToken,
+        ALFI_WHATSAPP_MCP_URL: whatsappMcpUrl(),
+      },
     });
 
-    const { error } = await db.from("agents").insert({
-      agent37_id: agent.id,
-      workspace_id: workspaceId,
-      name: agent.name || null,
-      status: agent.status,
-      template: agent.template,
-      cpu: agent.resources.cpu,
-      memory: agent.resources.memory,
-      disk: agent.resources.disk,
-      created_by: user.id,
-    });
+    const { error } = await db.from("agents").insert([
+      {
+        agent37_id: agent.id,
+        workspace_id: workspaceId,
+        name: agent.name || "Alfi",
+        status: agent.status,
+        template: agent.template,
+        cpu: agent.resources.cpu,
+        memory: agent.resources.memory,
+        disk: agent.resources.disk,
+        created_by: user.id,
+      },
+    ]);
     if (error) {
       // Roll back the orphaned agent so we never bill for an untracked box.
       try {
@@ -153,7 +162,34 @@ export async function POST(request: Request) {
       throw new ApiError(500, "db_error", error.message);
     }
 
-    return json(agent, 201);
+    const { error: connectionError } = await db.from("agent_whatsapp_connections").insert({
+      agent37_id: agent.id,
+      workspace_id: workspaceId,
+      token_hash: hashMcpToken(mcpToken),
+    });
+    if (connectionError) {
+      await db.from("agents").delete().eq("agent37_id", agent.id);
+      try {
+        await agent37.deleteAgent(agent.id);
+      } catch {
+        /* best-effort */
+      }
+      throw new ApiError(500, "db_error", connectionError.message);
+    }
+
+    try {
+      await provisionAlfi(db, agent.id);
+    } catch {
+      // Keep the tracked instance so an administrator can retry idempotently.
+    }
+
+    const { data: connection } = await db
+      .from("agent_whatsapp_connections")
+      .select("status, provisioning_status, provisioning_error")
+      .eq("agent37_id", agent.id)
+      .single();
+
+    return json({ ...agent, whatsapp: connection }, 201);
   } catch (e) {
     return handleError(e);
   }
