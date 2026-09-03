@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { metaAppSecret, metaVerifyToken } from "@/lib/alfi-config";
 import {
   decideSharedNumberRoute,
+  forwardSharedWebhook,
   metaChallengeResponse,
   toE164,
   trustedForwardUrl,
@@ -48,31 +49,33 @@ export async function POST(request: Request) {
   const targetUrl = trustedForwardUrl(connection.agent37_id, connection.webhook_url);
   if (!targetUrl) return new Response("Untrusted webhook", { status: 200 });
 
-  if (decision.messageId) {
-    const { error: duplicate } = await db.from("whatsapp_router_events").insert({
-      idempotency_key: decision.messageId,
-      agent37_id: connection.agent37_id,
-    });
-    if (duplicate?.code === "23505") return new Response("Already processed", { status: 200 });
-    if (duplicate) return new Response("Router storage unavailable", { status: 503 });
-  }
-
   try {
-    const signature = request.headers.get("x-hub-signature-256");
-    const headers = new Headers({ "content-type": "application/json" });
-    if (signature) headers.set("x-hub-signature-256", signature);
-    const downstream = await fetch(targetUrl, {
-      method: "POST",
-      headers,
-      body: rawBody,
-      redirect: "error",
-      signal: AbortSignal.timeout(15_000),
-    });
-    return new Response(await downstream.text(), { status: downstream.status });
+    const result = await forwardSharedWebhook(
+      {
+        messageIds: decision.messageIds,
+        targetUrl,
+        rawBody,
+        signature: request.headers.get("x-hub-signature-256"),
+      },
+      (url, init) => fetch(url, init),
+      {
+        claim: async (id) => {
+          const { error: duplicate } = await db.from("whatsapp_router_events").insert({
+            idempotency_key: id,
+            agent37_id: connection.agent37_id,
+          });
+          if (duplicate?.code === "23505") return "duplicate";
+          if (duplicate) throw new Error(duplicate.message);
+          return "ok";
+        },
+        release: async (ids) => {
+          if (ids.length === 0) return;
+          await db.from("whatsapp_router_events").delete().in("idempotency_key", ids);
+        },
+      }
+    );
+    return new Response(result.body, { status: result.status });
   } catch {
-    if (decision.messageId) {
-      await db.from("whatsapp_router_events").delete().eq("idempotency_key", decision.messageId);
-    }
-    return new Response("Downstream unavailable", { status: 502 });
+    return new Response("Router storage unavailable", { status: 503 });
   }
 }

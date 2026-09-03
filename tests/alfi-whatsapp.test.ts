@@ -111,7 +111,7 @@ describe("shared Alfi WhatsApp number router", () => {
           ],
         })
       )
-    ).toEqual({ action: "forward", sender: "972501234567", messageId: "wamid.1" });
+    ).toEqual({ action: "forward", sender: "972501234567", messageId: "wamid.1", messageIds: ["wamid.1"] });
 
     expect(
       decideSharedNumberRoute(
@@ -164,7 +164,8 @@ describe("shared Alfi WhatsApp number router", () => {
     expect(isTrustedHermesWebhook("https://wa-ab12cd34ef.agent37.app/whatsapp/webhook")).toBe(true);
     expect(isTrustedHermesWebhook("https://evil.example/whatsapp/webhook")).toBe(false);
     expect(isTrustedHermesWebhook("https://wa-ab12cd34ef.agent37.app/v1/chat")).toBe(false);
-    expect(trustedForwardUrl("ab12cd34ef", "https://evil.example/whatsapp/webhook")).toBe(
+    expect(trustedForwardUrl("ab12cd34ef", "https://evil.example/whatsapp/webhook")).toBeNull();
+    expect(trustedForwardUrl("ab12cd34ef", null)).toBe(
       "https://wa-ab12cd34ef.agent37.app/whatsapp/webhook"
     );
   });
