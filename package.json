@@ -1,5 +1,5 @@
 {
-  "name": "agent37-starter-kit",
+  "name": "alfi-business-agent",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,6 +11,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "verify": "npm run generate:alfi && npm test && npm run typecheck && npm run build",
     "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {

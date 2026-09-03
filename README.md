@@ -1,24 +1,39 @@
-# Agent37 Starter Kit
+# Alfi
 
-A full-stack starter for building your own agent app on the [Agent37](https://www.agent37.com) Cloud API — auth, chat, files, integrations, and fleet management, with your choice of Hermes or OpenClaw. Fork it, rebrand it, ship it.
+Alfi is a bilingual business assistant for owners. Customers talk to Alfi, manage schedules and results, connect business tools, and use two WhatsApp paths: their business number through Kapso, and a private owner channel on the shared Meta Cloud number.
 
-<p align="center">
-  <img src="screenshots/demo.gif" alt="Demo of the Agent37 Starter Kit dashboard and agent workspace" width="100%" />
-</p>
+This repository is the canonical Alfi product. It is a client of the [Agent37](https://www.agent37.com) API. Only Kapso business numbers and the shared Meta Cloud owner channel are supported.
+
+## Customer experience
+
+- **Alfi** — the conversation
+- **Schedules** — live Hermes jobs and results, timezone `Asia/Jerusalem`
+- **WhatsApp** — connect business WhatsApp, and talk to Alfi on WhatsApp
+- **Business** — integrations Alfi can read
+
+Staff see an additional **Advanced** area. Staff access is server-enforced.
 
 ## Setup
 
-**1. Get two keys** (both behind a login, so only you can fetch them):
+Follow **SETUP.md**. You will need `AGENT37_API_KEY` (funded Agent37 wallet) and `SUPABASE_ACCESS_TOKEN`. `npm run setup` configures Supabase. Never print or commit the `sk_live_` key.
 
-- `AGENT37_API_KEY` — Agent37 dashboard → **Cloud → API keys**, then **fund the wallet** (Cloud → Billing).
-- `SUPABASE_ACCESS_TOKEN` — [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens).
+Then fill the WhatsApp and staff values in `.env.local` from `.env.example`.
 
-**2. Hand it to your coding agent.** Open this folder in Claude Code / Codex and paste:
-
-```
-Set this repo up and run it locally, end to end — follow SETUP.md. Ask me for the two
-login-gated keys it needs, then do everything else and tell me the local URL.
+```bash
+npm install
+npm run setup
+npm run dev
 ```
 
-It writes your keys, configures Supabase, and starts the app. Prefer to do it yourself?
-**[SETUP.md](SETUP.md)** has the four-command path and deploy steps too.
+## Commands
+
+```bash
+npm run dev
+npm test
+npm run typecheck
+npm run verify   # generate bundle, tests, typecheck, production build
+```
+
+## Operations
+
+See `docs/operations/production.md` for environment variables, webhooks, staff roles, cron checks, Vercel, and rollback.
