@@ -1,142 +1,128 @@
-import { createAdminClient } from "./supabase/admin";
-import * as agent37 from "./agent37";
+import "server-only";
+import { agent37, Agent37Error } from "@/lib/agent37";
+import { whatsappCloudConfig } from "@/lib/alfi-config";
+import type { DB } from "@/lib/auth";
+import { ApiError } from "@/lib/http";
 import {
+  HERMES_WHATSAPP_PATH,
   HERMES_WHATSAPP_PORT,
-  HERMES_WHATSAPP_PORT_PREFIX,
+  HERMES_WHATSAPP_PREFIX,
+  hermesWebhookUrl,
+  isTrustedHermesWebhook,
   parseOwnerPhone,
-} from "./alfi-config";
-import { hermesWebhookUrl } from "./whatsapp-router";
-import type { Agent } from "./types";
+} from "@/lib/whatsapp-router";
 
-const PHONE_TAKEN = "PHONE_TAKEN";
-
-function shellQuote(value: string): string {
-  return `'${value.replace(/'/g, `'"'"'`)}'`;
+function hermesEnvCommand(vars: Record<string, string>) {
+  const payload = Buffer.from(JSON.stringify(vars)).toString("base64");
+  return `python3 - <<'PY'
+import base64, json, pathlib
+vars = json.loads(base64.b64decode("${payload}").decode())
+p = pathlib.Path.home() / ".hermes" / ".env"
+p.parent.mkdir(parents=True, exist_ok=True)
+existing = {}
+if p.exists():
+    for line in p.read_text().splitlines():
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        existing[key] = value
+existing.update(vars)
+p.write_text("".join(f"{key}={value}\n" for key, value in existing.items()))
+PY`;
 }
 
-function upsertEnv(existing: string, key: string, value: string): string {
-  const line = `${key}=${value}`;
-  const pattern = new RegExp(`^${key}=.*$`, "m");
-  if (pattern.test(existing)) return existing.replace(pattern, line);
-  const trimmed = existing.replace(/\s+$/, "");
-  return trimmed ? `${trimmed}\n${line}\n` : `${line}\n`;
-}
-
-export async function saveOwnerPhone(agentId: string, rawPhone: string): Promise<string> {
-  const phone = parseOwnerPhone(rawPhone);
-  if (!phone) {
-    throw new Error("Enter a valid WhatsApp number with country code");
+async function ensureWhatsAppPublicPort(agentId: string): Promise<string> {
+  const agent = await agent37.getAgent(agentId);
+  const existing = agent.public_ports?.find((port) => port.port === HERMES_WHATSAPP_PORT);
+  if (existing?.url) {
+    return `${existing.url.replace(/\/+$/, "")}${HERMES_WHATSAPP_PATH}`;
   }
-  const db = createAdminClient();
-  const { data: taken } = await db
-    .from("agents")
-    .select("id")
-    .eq("owner_phone_e164", phone)
-    .neq("id", agentId)
-    .maybeSingle();
-  if (taken) {
-    const error = new Error("That WhatsApp number is already assigned to another agent");
-    Object.assign(error, { code: PHONE_TAKEN });
-    throw error;
-  }
-  const { error } = await db
-    .from("agents")
-    .update({ owner_phone_e164: phone, updated_at: new Date().toISOString() })
-    .eq("id", agentId);
-  if (error) {
-    if (error.code === "23505") {
-      const conflict = new Error("That WhatsApp number is already assigned to another agent");
-      Object.assign(conflict, { code: PHONE_TAKEN });
-      throw conflict;
+  try {
+    const created = await agent37.createPublicPort(agentId, {
+      port: HERMES_WHATSAPP_PORT,
+      prefix: HERMES_WHATSAPP_PREFIX,
+    });
+    return `${created.url.replace(/\/+$/, "")}${HERMES_WHATSAPP_PATH}`;
+  } catch (error) {
+    if (error instanceof Agent37Error && error.status === 409) {
+      return hermesWebhookUrl(agentId);
     }
     throw error;
   }
-  return phone;
 }
 
-export function isPhoneTaken(error: unknown): boolean {
-  return Boolean(error && typeof error === "object" && "code" in error && error.code === PHONE_TAKEN);
-}
-
-async function mergeHermesEnv(instanceId: string, values: Record<string, string>): Promise<void> {
-  const current = await agent37.execInInstance(instanceId, [
-    "bash",
-    "-lc",
-    "cat ~/.hermes/.env 2>/dev/null || true",
-  ]);
-  let next = current.stdout || "";
-  for (const [key, value] of Object.entries(values)) {
-    if (value) next = upsertEnv(next, key, value);
-  }
-  await agent37.writeFileInInstance(instanceId, "/root/.hermes/.env", next);
-}
-
-export async function configureSharedWhatsApp(agent: Agent, ownerPhone: string): Promise<void> {
-  if (!agent.instance_id) throw new Error("Agent has no instance");
-  const db = createAdminClient();
-  const webhookUrl = hermesWebhookUrl(agent.instance_id);
-
-  try {
-    await agent37.createPublicPort(
-      agent.instance_id,
-      HERMES_WHATSAPP_PORT,
-      HERMES_WHATSAPP_PORT_PREFIX,
-    );
-  } catch {
-    // Port may already exist from instance create.
+export async function saveOwnerPhone(db: DB, agentId: string, phone: string) {
+  const parsed = parseOwnerPhone(phone);
+  if (!parsed) {
+    throw new ApiError(400, "invalid_request", "Enter a WhatsApp number with country code");
   }
 
-  const values: Record<string, string> = {
-    WHATSAPP_CLOUD_ALLOWED_USERS: ownerPhone,
-    WHATSAPP_CLOUD_ALLOW_ALL_USERS: "false",
-    SESSION_IDLE_TIMEOUT: "0",
-  };
-  const phoneNumberId = process.env.WHATSAPP_CLOUD_PHONE_NUMBER_ID;
-  const accessToken = process.env.WHATSAPP_CLOUD_ACCESS_TOKEN;
-  const appSecret = process.env.META_APP_SECRET;
-  const verifyToken = process.env.META_VERIFY_TOKEN;
-  if (phoneNumberId) values.WHATSAPP_CLOUD_PHONE_NUMBER_ID = phoneNumberId;
-  if (accessToken) values.WHATSAPP_CLOUD_ACCESS_TOKEN = accessToken;
-  if (appSecret) values.WHATSAPP_CLOUD_APP_SECRET = appSecret;
-  if (verifyToken) values.WHATSAPP_CLOUD_VERIFY_TOKEN = verifyToken;
-
-  await mergeHermesEnv(agent.instance_id, values);
-
-  if (phoneNumberId && accessToken && appSecret && verifyToken) {
-    await agent37.execInInstance(agent.instance_id, [
-      "bash",
-      "-lc",
-      [
-        "python3 - <<'PY'",
-        "from pathlib import Path",
-        "p = Path.home() / '.hermes' / 'config.yaml'",
-        "text = p.read_text() if p.exists() else ''",
-        "if 'whatsapp_cloud:' in text:",
-        "    import re",
-        "    text = re.sub(r'(whatsapp_cloud:[\\s\\S]*?enabled:)\\s*false', r'\\1 true', text, count=1)",
-        "    p.write_text(text)",
-        "PY",
-        "hermes restart || true",
-      ].join("\n"),
-    ]);
+  const { data: taken, error: lookupError } = await db
+    .from("agent_whatsapp_connections")
+    .select("agent37_id")
+    .eq("owner_phone_e164", parsed.e164)
+    .neq("agent37_id", agentId)
+    .maybeSingle();
+  if (lookupError) throw new ApiError(500, "db_error", lookupError.message);
+  if (taken) {
+    throw new ApiError(409, "phone_in_use", "This WhatsApp number is already assigned to another Alfi");
   }
 
-  await db
-    .from("agents")
+  const webhookUrl = hermesWebhookUrl(agentId);
+  const { error } = await db
+    .from("agent_whatsapp_connections")
     .update({
+      owner_phone_e164: parsed.e164,
       webhook_url: webhookUrl,
-      whatsapp_status: "active",
       updated_at: new Date().toISOString(),
     })
-    .eq("id", agent.id);
+    .eq("agent37_id", agentId);
+  if (error?.code === "23505") {
+    throw new ApiError(409, "phone_in_use", "This WhatsApp number is already assigned to another Alfi");
+  }
+  if (error) throw new ApiError(500, "db_error", error.message);
+  return parsed;
 }
 
-export async function lookupAgentByOwnerPhone(phone: string): Promise<Agent | null> {
-  const db = createAdminClient();
-  const { data } = await db
-    .from("agents")
-    .select("*")
-    .eq("owner_phone_e164", phone)
+export async function configureSharedWhatsApp(db: DB, agentId: string) {
+  const { data, error } = await db
+    .from("agent_whatsapp_connections")
+    .select("owner_phone_e164")
+    .eq("agent37_id", agentId)
     .maybeSingle();
-  return (data as Agent | null) ?? null;
+  if (error) throw new ApiError(500, "db_error", error.message);
+  const parsed = parseOwnerPhone(data?.owner_phone_e164);
+  if (!parsed) return;
+
+  const webhookUrl = await ensureWhatsAppPublicPort(agentId);
+  if (!isTrustedHermesWebhook(webhookUrl)) {
+    throw new ApiError(500, "config_error", "Hermes WhatsApp webhook URL is not trusted");
+  }
+
+  const { error: updateError } = await db
+    .from("agent_whatsapp_connections")
+    .update({ webhook_url: webhookUrl, updated_at: new Date().toISOString() })
+    .eq("agent37_id", agentId);
+  if (updateError) throw new ApiError(500, "db_error", updateError.message);
+
+  const vars: Record<string, string> = {
+    WHATSAPP_CLOUD_ALLOWED_USERS: parsed.waId,
+    WHATSAPP_CLOUD_ALLOW_ALL_USERS: "false",
+  };
+  const cloud = whatsappCloudConfig();
+  if (cloud) {
+    vars.WHATSAPP_CLOUD_PHONE_NUMBER_ID = cloud.phoneNumberId;
+    vars.WHATSAPP_CLOUD_ACCESS_TOKEN = cloud.accessToken;
+    vars.WHATSAPP_CLOUD_APP_SECRET = cloud.appSecret;
+    vars.WHATSAPP_CLOUD_VERIFY_TOKEN = cloud.verifyToken;
+  }
+
+  await agent37.exec(agentId, hermesEnvCommand(vars));
+  if (cloud) {
+    try {
+      await agent37.restart(agentId);
+    } catch {
+      await agent37.start(agentId);
+    }
+  }
 }
