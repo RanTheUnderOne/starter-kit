@@ -2,6 +2,7 @@ import "server-only";
 import { ALFI_BUNDLE } from "@/generated/alfi-bundle";
 import { agent37 } from "@/lib/agent37";
 import type { DB } from "@/lib/auth";
+import { configureSharedWhatsApp } from "@/lib/whatsapp-gateway";
 
 const MAX_COMMAND_CHARS = 90_000;
 
@@ -30,6 +31,8 @@ servers["alfi_whatsapp"]={
   "headers":{"Authorization":"Bearer \${ALFI_WHATSAPP_MCP_TOKEN}"},
   "enabled":True,
 }
+platforms=cfg.setdefault("platforms", {})
+platforms.setdefault("whatsapp_cloud", {})["enabled"]=True
 with open(p,"w") as f: yaml.safe_dump(cfg,f,sort_keys=False)
 `;
   return `python3 - <<'PY'\n${script}\nPY\nhermes config check`;
@@ -91,6 +94,15 @@ export async function provisionAlfi(db: DB, agentId: string) {
       "test -s \"$HOME/.hermes/SOUL.md\" && test -s \"$HOME/.hermes/skills/whatsapp/mcp/SKILL.md\" && hermes skills list >/dev/null"
     );
     await waitForHealthy(agentId);
+    const { data: connection } = await db
+      .from("agent_whatsapp_connections")
+      .select("owner_phone_e164")
+      .eq("agent37_id", agentId)
+      .maybeSingle();
+    if (connection?.owner_phone_e164) {
+      await configureSharedWhatsApp(db, agentId);
+      await waitForHealthy(agentId);
+    }
     await setProvisioning(db, agentId, "ready", null);
   } catch (error) {
     const message = error instanceof Error ? error.message.slice(0, 1000) : "Provisioning failed";

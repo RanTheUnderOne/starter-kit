@@ -42,7 +42,7 @@ export function toE164(waId: string): string {
   return `+${waId}`;
 }
 
-export function parseOwnerPhone(input: string | null | undefined): { waId: string; e164: string } | null {
+export function parseOwnerPhone(input: string | null | undefined): { waId: string, e164: string } | null {
   const waId = normalizeWaId(input);
   if (!waId) return null;
   return { waId, e164: toE164(waId) };
