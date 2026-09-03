@@ -1,4 +1,5 @@
 import "server-only";
+import { ALFI_DEFAULT_CRON_JOBS } from "@/generated/alfi-bundle";
 import { agent37, Agent37Error } from "@/lib/agent37";
 import type { CronJob, CronJobInput, CronRun } from "@/lib/types";
 import {
@@ -65,7 +66,11 @@ function parseJsonLines(stdout: string): Record<string, unknown>[] {
 
 export async function listCronJobs(agentId: string): Promise<CronJob[]> {
   const result = await agent37.exec(agentId, LIST_JOBS_COMMAND);
-  return parseJsonArray(result.stdout).map(normalizeCronJob);
+  const defaultNames = new Map<string, string>(ALFI_DEFAULT_CRON_JOBS.map((job) => [job.key, job.name]));
+  return parseJsonArray(result.stdout).map((raw) => {
+    const job = normalizeCronJob(raw);
+    return { ...job, displayName: defaultNames.get(job.name) ?? job.displayName };
+  });
 }
 
 export async function listCronRuns(agentId: string, jobId: string, limit = 20): Promise<CronRun[]> {
@@ -106,4 +111,3 @@ export const runCronJob = (agentId: string, jobId: string) => runAction(agentId,
 export const removeCronJob = (agentId: string, jobId: string) => runAction(agentId, "remove", jobId);
 
 export { cronActionInput, cronJobId, cronJobInput, encodeHermesCronExec } from "@/lib/hermes-cron-core";
-

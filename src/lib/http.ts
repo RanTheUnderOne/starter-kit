@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Agent37Error } from "@/lib/agent37";
+import { ZodError } from "zod";
 
 export class ApiError extends Error {
   status: number;
@@ -31,6 +32,9 @@ export function apiError(message: string, status = 400, code = "error") {
 export function handleError(e: unknown) {
   if (e instanceof ApiError || e instanceof Agent37Error) {
     return apiError(e.message, e.status, e.code);
+  }
+  if (e instanceof ZodError) {
+    return apiError(e.issues[0]?.message ?? "Invalid request", 400, "invalid_request");
   }
   console.error("[api]", e);
   return apiError("Internal server error", 500, "internal_error");

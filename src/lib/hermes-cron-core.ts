@@ -36,6 +36,10 @@ function stringList(value: unknown): string[] {
 }
 
 function inferState(job: Record<string, unknown>): CronJob["state"] {
+  const explicit = nullableString(job.state)?.toLowerCase();
+  if (["scheduled", "paused", "completed", "running", "error"].includes(explicit ?? "")) {
+    return explicit as CronJob["state"];
+  }
   if (job.enabled === false) return "paused";
   const status = nullableString(job.last_status)?.toLowerCase();
   if (status === "running" || status === "claimed") return "running";
@@ -53,13 +57,22 @@ export function normalizeCronJob(job: Record<string, unknown>): CronJob {
     name,
     displayName,
     prompt: nullableString(job.prompt) ?? "",
-    schedule: nullableString(job.schedule) ?? "",
+    schedule:
+      nullableString(job.schedule_display) ??
+      nullableString(job.schedule) ??
+      (job.schedule && typeof job.schedule === "object"
+        ? nullableString((job.schedule as Record<string, unknown>).display) ??
+          nullableString((job.schedule as Record<string, unknown>).value) ??
+          nullableString((job.schedule as Record<string, unknown>).expr) ??
+          nullableString((job.schedule as Record<string, unknown>).run_at) ??
+          ""
+        : ""),
     state: inferState(job),
     enabled: job.enabled !== false,
     nextRunAt: nullableString(job.next_run_at),
     lastRunAt: nullableString(job.last_run_at),
-    lastStatus: nullableString(job.last_status),
-    lastError: nullableString(job.last_error),
+    lastStatus: nullableString(job.last_status) ?? nullableString(job.last_run_status),
+    lastError: nullableString(job.last_error) ?? nullableString(job.last_run_error),
     skills: stringList(job.skills),
     managedDefault: name.startsWith("alfi:"),
   };
@@ -104,4 +117,3 @@ export function createCronArgs(input: CronJobInput, skills: readonly string[] = 
     ...skills.flatMap((skill) => ["--skill", skill]),
   ];
 }
-
