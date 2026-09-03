@@ -1,0 +1,20 @@
+[
+  {
+    "key": "alfi:evening-pipeline-audit",
+    "name": "Evening pipeline review",
+    "schedule": "0 18 * * 0-4",
+    "timezone": "Asia/Jerusalem",
+    "skills": ["business/lead-triage", "business/follow-up-radar"],
+    "deliver": "local",
+    "prompt": "Review today's lead pipeline, identify conversations waiting for the business, summarize important changes, and propose the next follow-up actions. Do not contact customers or mutate CRM records."
+  },
+  {
+    "key": "alfi:morning-sales-review",
+    "name": "Morning sales review",
+    "schedule": "0 8 * * 0-4",
+    "timezone": "Asia/Jerusalem",
+    "skills": ["business/morning-review", "business/lead-triage", "sources/whatsapp", "sources/gmail", "crm/fireberry"],
+    "deliver": "local",
+    "prompt": "Review new inbound leads from WhatsApp and Gmail, deduplicate them through the configured CRM, prioritize urgent or unanswered opportunities, and produce a concise owner briefing with proposed next steps. Do not contact customers or mutate CRM records."
+  }
+]
