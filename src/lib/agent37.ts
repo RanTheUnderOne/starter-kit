@@ -130,6 +130,18 @@ async function instanceCall<T>(id: string, path: string, init?: RequestInit): Pr
   return parseAgent37<T>(res);
 }
 
+export interface PublicPortInput {
+  port: number;
+  prefix?: string;
+}
+
+export interface PublicPort {
+  port: number;
+  url: string;
+  prefix?: string | null;
+  created?: number;
+}
+
 export interface CreateAgentInput {
   template?: string;
   resources?: { cpu?: number; memory?: number; disk?: number };
@@ -138,6 +150,7 @@ export interface CreateAgentInput {
   metadata?: Record<string, unknown>;
   budget?: { monthly_cap_micros?: number; credit_micros?: number };
   env?: Record<string, string>;
+  public_ports?: PublicPortInput[];
 }
 
 export interface ExecResult {
@@ -200,6 +213,11 @@ export const agent37 = {
     call<{ url: string; port: number; expires_at: number }>(`/instances/${id}/signed-url`, {
       method: "POST",
       body: JSON.stringify({ port, ...(ttlSeconds ? { ttl_seconds: ttlSeconds } : {}) }),
+    }),
+  createPublicPort: (id: string, body: PublicPortInput) =>
+    call<PublicPort>(`/instances/${id}/public-ports`, {
+      method: "POST",
+      body: JSON.stringify(body),
     }),
 
   getBudget: (id: string) => call<Budget>(`/instances/${id}/budget`),
