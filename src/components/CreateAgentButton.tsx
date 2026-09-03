@@ -13,6 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function CreateAgentButton({
   workspaceId,
@@ -24,6 +26,7 @@ export function CreateAgentButton({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [agentId, setAgentId] = useState<string | null>(null);
+  const [ownerPhone, setOwnerPhone] = useState("");
   const router = useRouter();
 
   async function create() {
@@ -31,7 +34,10 @@ export function CreateAgentButton({
     try {
       const agent = await apiFetch<{ id: string }>("/api/agents", {
         method: "POST",
-        body: JSON.stringify({ workspace_id: workspaceId }),
+        body: JSON.stringify({
+          workspace_id: workspaceId,
+          owner_phone: ownerPhone.trim() || undefined,
+        }),
       });
       setAgentId(agent.id);
       toast.success("Alfi is ready");
@@ -61,6 +67,7 @@ export function CreateAgentButton({
   function finish() {
     if (!agentId) return;
     setAgentId(null);
+    setOwnerPhone("");
     setOpen(false);
     router.push(`/dashboard/agents/${agentId}/settings`);
   }
@@ -77,7 +84,10 @@ export function CreateAgentButton({
         onOpenChange={(next) => {
           if (busy) return;
           setOpen(next);
-          if (!next) setAgentId(null);
+          if (!next) {
+            setAgentId(null);
+            setOwnerPhone("");
+          }
         }}
       >
         <DialogContent>
@@ -99,10 +109,29 @@ export function CreateAgentButton({
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              We&apos;ll create your private Hermes instance, install Alfi&apos;s business
-              skills, and connect its per-instance Composio tools.
-            </p>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                We&apos;ll create your private Hermes instance, install Alfi&apos;s business
+                skills, and connect its per-instance Composio tools.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="owner-phone">Your WhatsApp number</Label>
+                <Input
+                  id="owner-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="+972501234567"
+                  value={ownerPhone}
+                  onChange={(event) => setOwnerPhone(event.target.value)}
+                  disabled={busy}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Optional. Only this number can message this Alfi on the shared Alfi WhatsApp
+                  line. You can set or change it later in Settings.
+                </p>
+              </div>
+            </div>
           )}
 
           <DialogFooter>

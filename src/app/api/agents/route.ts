@@ -6,6 +6,8 @@ import { ApiError, handleError, json, readJson } from "@/lib/http";
 import { createMcpToken, hashMcpToken } from "@/lib/mcp-auth";
 import { whatsappMcpUrl } from "@/lib/alfi-config";
 import { provisionAlfi } from "@/lib/alfi-provisioning";
+import { HERMES_WHATSAPP_PORT, HERMES_WHATSAPP_PREFIX } from "@/lib/whatsapp-router";
+import { saveOwnerPhone } from "@/lib/whatsapp-gateway";
 import type { Agent, AgentRow, MergedAgent, Template } from "@/lib/types";
 
 // The image catalog barely changes, but the dashboard polls this route every 5s while any agent is
@@ -109,7 +111,7 @@ export async function POST(request: Request) {
   try {
     const { db, user } = await requireUser();
     // Shape and template are fixed server-side; every instance is an Alfi Hermes agent.
-    const body = await readJson<{ workspace_id?: string }>(request);
+    const body = await readJson<{ workspace_id?: string; owner_phone?: string }>(request);
 
     const workspaceId = body.workspace_id;
     if (!workspaceId) throw new ApiError(400, "invalid_request", "workspace_id is required");
@@ -122,8 +124,7 @@ export async function POST(request: Request) {
       ? DEFAULT_AGENT.template
       : await resolveTemplate();
     const mcpToken = createMcpToken();
-
-    const agent = await agent37.createAgent({
+    const createInput = {
       template,
       resources: {
         cpu: DEFAULT_AGENT.cpu,
@@ -137,7 +138,15 @@ export async function POST(request: Request) {
         ALFI_WHATSAPP_MCP_TOKEN: mcpToken,
         ALFI_WHATSAPP_MCP_URL: whatsappMcpUrl(),
       },
-    });
+      public_ports: [{ port: HERMES_WHATSAPP_PORT, prefix: HERMES_WHATSAPP_PREFIX }],
+    };
+    let agent: Agent;
+    try {
+      agent = await agent37.createAgent(createInput);
+    } catch {
+      const { public_ports: _publicPorts, ...withoutPorts } = createInput;
+      agent = await agent37.createAgent(withoutPorts);
+    }
 
     const { error } = await db.from("agents").insert([
       {
@@ -177,6 +186,10 @@ export async function POST(request: Request) {
       throw new ApiError(500, "db_error", connectionError.message);
     }
 
+    if (body.owner_phone?.trim()) {
+      await saveOwnerPhone(db, agent.id, body.owner_phone);
+    }
+
     try {
       await provisionAlfi(db, agent.id);
     } catch {
@@ -185,7 +198,7 @@ export async function POST(request: Request) {
 
     const { data: connection } = await db
       .from("agent_whatsapp_connections")
-      .select("status, provisioning_status, provisioning_error")
+      .select("status, provisioning_status, provisioning_error, owner_phone_e164, webhook_url")
       .eq("agent37_id", agent.id)
       .single();
 
