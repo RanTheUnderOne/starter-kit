@@ -258,3 +258,35 @@ export interface FileListResponse {
   entries: FileEntry[];
   truncated: boolean;
 }
+
+// ---- Customer-facing Hermes scheduled jobs ----
+
+export interface CronJobInput {
+  name: string;
+  schedule: string;
+  prompt: string;
+}
+
+export interface CronJob extends CronJobInput {
+  id: string;
+  displayName: string;
+  state: "scheduled" | "paused" | "completed" | "running" | "error" | "unknown";
+  enabled: boolean;
+  nextRunAt: string | null;
+  lastRunAt: string | null;
+  lastStatus: string | null;
+  lastError: string | null;
+  skills: string[];
+  managedDefault: boolean;
+}
+
+export interface CronRun {
+  id: string;
+  jobId: string;
+  status: string;
+  claimedAt: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  error: string | null;
+  output: string | null;
+}
