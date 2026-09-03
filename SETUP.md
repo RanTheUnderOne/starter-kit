@@ -15,6 +15,11 @@ The Alfi WhatsApp build also requires these production-only server values:
 - `ALFI_PUBLIC_URL` — the stable HTTPS origin of this website. Preview
   deployments fall back to the current Vercel URL, and production can also use
   `NEXT_PUBLIC_SITE_URL` if this is unset.
+- `META_APP_SECRET`, `META_VERIFY_TOKEN`, `WHATSAPP_CLOUD_PHONE_NUMBER_ID`,
+  and `WHATSAPP_CLOUD_ACCESS_TOKEN` — the shared Alfi WhatsApp Cloud number.
+  Meta can register only one webhook; point it at
+  `$ALFI_PUBLIC_URL/api/webhooks/whatsapp` with `META_VERIFY_TOKEN`. The
+  website maps the inbound sender to one Hermes owner number.
 
 In Kapso, create a project webhook pointing to
 `$ALFI_PUBLIC_URL/api/webhooks/kapso`, use `KAPSO_PROJECT_WEBHOOK_SECRET`, and
@@ -97,7 +102,9 @@ backend or register your sign-in URLs. Run setup locally once first, then:
 3. Add **only these** env vars: `AGENT37_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`,
    `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server-only — the runtime needs
  it for all DB access), `NEXT_PUBLIC_SITE_URL` (your prod URL), `KAPSO_API_KEY`,
- `KAPSO_PROJECT_WEBHOOK_SECRET`, `ALFI_MCP_TOKEN_PEPPER`, and `ALFI_PUBLIC_URL`.
+ `KAPSO_PROJECT_WEBHOOK_SECRET`, `ALFI_MCP_TOKEN_PEPPER`, `ALFI_PUBLIC_URL`,
+ `META_APP_SECRET`, `META_VERIFY_TOKEN`, `WHATSAPP_CLOUD_PHONE_NUMBER_ID`, and
+ `WHATSAPP_CLOUD_ACCESS_TOKEN`.
    **Never add** `SUPABASE_ACCESS_TOKEN` — it's setup-only (used to create/configure the project,
    never at runtime).
    (Branding is code-side now — edit `src/config/branding.ts`, not env.)
