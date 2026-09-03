@@ -190,11 +190,8 @@ export async function POST(request: Request) {
       await saveOwnerPhone(db, agent.id, body.owner_phone);
     }
 
-    try {
-      await provisionAlfi(db, agent.id);
-    } catch {
-      // Keep the tracked instance so an administrator can retry idempotently.
-    }
+    // Keep a failed instance tracked for staff retry, but never tell the customer it is ready.
+    await provisionAlfi(db, agent.id);
 
     const { data: connection } = await db
       .from("agent_whatsapp_connections")
