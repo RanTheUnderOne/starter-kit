@@ -12,7 +12,9 @@ The Alfi WhatsApp build also requires these production-only server values:
 - `KAPSO_API_KEY` — one Kapso project key kept only by the website.
 - `KAPSO_PROJECT_WEBHOOK_SECRET` — a random secret shared with the Kapso project webhook.
 - `ALFI_MCP_TOKEN_PEPPER` — a separate random 32+ byte secret used to hash per-agent tokens.
-- `ALFI_PUBLIC_URL` — the stable HTTPS origin of this website.
+- `ALFI_PUBLIC_URL` — the stable HTTPS origin of this website. Preview
+  deployments fall back to the current Vercel URL, and production can also use
+  `NEXT_PUBLIC_SITE_URL` if this is unset.
 
 In Kapso, create a project webhook pointing to
 `$ALFI_PUBLIC_URL/api/webhooks/kapso`, use `KAPSO_PROJECT_WEBHOOK_SECRET`, and

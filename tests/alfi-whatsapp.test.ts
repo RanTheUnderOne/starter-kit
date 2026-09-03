@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { hashTokenWithPepper } from "../src/lib/alfi-crypto";
+import { resolveAlfiPublicOrigin } from "../src/lib/alfi-public-url";
 import { verifyKapsoSignature } from "../src/lib/kapso-webhook";
 
 const root = resolve(import.meta.dirname, "..");
@@ -36,6 +37,27 @@ describe("Alfi WhatsApp security contracts", () => {
     expect(provisioner).toContain(".hermes/skills");
     expect(provisioner).toContain("${ALFI_WHATSAPP_MCP_TOKEN}");
     expect(skill).toContain("requires explicit owner approval");
+  });
+
+  it("uses the preview deployment URL instead of production", () => {
+    expect(
+      resolveAlfiPublicOrigin({
+        ALFI_PUBLIC_URL: "https://alfi-agents-dashboard.vercel.app",
+        NEXT_PUBLIC_SITE_URL: "https://alfi-agents-dashboard.vercel.app",
+        VERCEL_ENV: "preview",
+        VERCEL_BRANCH_URL: "alfi-agents-dashboa-git-ba2630-nadlanaisolutions-8350s-projects.vercel.app",
+        VERCEL_URL: "alfi-agents-dashboard-preview.vercel.app",
+      })
+    ).toBe("https://alfi-agents-dashboa-git-ba2630-nadlanaisolutions-8350s-projects.vercel.app");
+  });
+
+  it("falls back to the site URL when ALFI_PUBLIC_URL is missing", () => {
+    expect(
+      resolveAlfiPublicOrigin({
+        NEXT_PUBLIC_SITE_URL: "https://alfi-agents-dashboard.vercel.app",
+        VERCEL_ENV: "production",
+      })
+    ).toBe("https://alfi-agents-dashboard.vercel.app");
   });
 
   it("deduplicates signed webhooks before changing connection state", () => {

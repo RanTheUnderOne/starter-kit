@@ -1,4 +1,5 @@
 import "server-only";
+import { resolveAlfiPublicOrigin } from "@/lib/alfi-public-url";
 import { ApiError } from "@/lib/http";
 
 function required(name: string): string {
@@ -20,11 +21,11 @@ export function mcpTokenPepper() {
 }
 
 export function alfiPublicUrl() {
-  const url = new URL(required("ALFI_PUBLIC_URL"));
-  if (url.protocol !== "https:" && url.hostname !== "localhost") {
-    throw new ApiError(500, "config_error", "ALFI_PUBLIC_URL must use HTTPS");
+  const origin = resolveAlfiPublicOrigin();
+  if (!origin) {
+    throw new ApiError(500, "config_error", "ALFI_PUBLIC_URL is not configured");
   }
-  return url.origin;
+  return origin;
 }
 
 export function whatsappMcpUrl() {
