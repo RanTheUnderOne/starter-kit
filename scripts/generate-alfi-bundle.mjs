@@ -60,6 +60,18 @@ for (const job of cronJobs) {
 }
 cronJobs.sort((a, b) => a.key.localeCompare(b.key));
 
+const skillNames = [
+  ...new Set(
+    files.flatMap((file) => {
+      if (!file.path.endsWith("/SKILL.md")) return [];
+      const content = Buffer.from(file.base64, "base64").toString("utf8");
+      const match = content.match(/^name:\s*(.+)$/m);
+      if (!match) throw new Error(`Alfi skill ${file.path} is missing a name`);
+      return [match[1].trim()];
+    }),
+  ),
+].sort((a, b) => a.localeCompare(b));
+
 fs.mkdirSync(path.dirname(output), { recursive: true });
 fs.writeFileSync(
   output,
@@ -74,6 +86,7 @@ fs.writeFileSync(
     `  prompt: string;\n` +
     `}\n\n` +
     `export const ALFI_BUNDLE = ${JSON.stringify(files, null, 2)} as const;\n\n` +
+    `export const ALFI_SKILL_NAMES = ${JSON.stringify(skillNames)} as const;\n\n` +
     `export const ALFI_DEFAULT_CRON_JOBS = ${JSON.stringify(cronJobs, null, 2)} as const satisfies readonly AlfiDefaultCronJob[];\n`
 );
 console.log(`Generated ${files.length} Alfi files and ${cronJobs.length} cron defaults.`);

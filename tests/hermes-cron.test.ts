@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import {
   cronJobId,
@@ -5,6 +7,8 @@ import {
   encodeHermesCronExec,
   normalizeCronJob,
 } from "../src/lib/hermes-cron-core";
+
+const hermesCron = readFileSync(resolve(import.meta.dirname, "../src/lib/hermes-cron.ts"), "utf8");
 
 describe("Hermes cron command safety", () => {
   test("encodes every browser-controlled argument instead of interpolating shell text", () => {
@@ -83,5 +87,12 @@ describe("Hermes cron public contract", () => {
       skills: ["business/morning-review"],
       managedDefault: true,
     });
+  });
+
+  test("lists jobs from Hermes files instead of importing the cron package", () => {
+    expect(hermesCron).not.toContain("from cron.jobs");
+    expect(hermesCron).not.toContain("from cron.executions");
+    expect(hermesCron).toContain("jobs.json");
+    expect(hermesCron).toContain("executions.db");
   });
 });

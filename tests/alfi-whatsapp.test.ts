@@ -155,6 +155,11 @@ describe("shared Alfi WhatsApp number router", () => {
     expect(gateway).not.toContain("WHATSAPP_CLOUD_WEBHOOK_PATH");
     expect(`${router}${gateway}${provisioner}`).not.toContain("8091");
     expect(provisioner).toContain('platforms.setdefault("whatsapp_cloud"');
+    expect(provisioner).toContain('cfg.setdefault("display", {})');
+    expect(provisioner).toContain("interim_assistant_messages");
+    expect(provisioner).toContain("show_commentary");
+    expect(provisioner).toContain("busy_ack_enabled");
+    expect(provisioner).toContain("cleanup_progress");
   });
 
   it("only forwards to HTTPS Hermes WhatsApp webhooks", () => {

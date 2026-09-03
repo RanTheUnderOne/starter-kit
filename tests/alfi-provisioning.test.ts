@@ -3,6 +3,8 @@ import { ALFI_DEFAULT_CRON_JOBS } from "../src/generated/alfi-bundle";
 import {
   buildCronInstallSteps,
   buildProvisioningSteps,
+  disabledSkillNames,
+  parseHermesSkillListNames,
 } from "../src/lib/alfi-provisioning-core";
 
 describe("Alfi provisioning contract", () => {
@@ -10,6 +12,7 @@ describe("Alfi provisioning contract", () => {
     expect(buildProvisioningSteps().map((step) => step.kind)).toEqual([
       "upload-bundle",
       "configure",
+      "disable-stock-skills",
       "verify-skills",
       "install-crons",
       "verify-crons",
@@ -49,5 +52,23 @@ describe("Alfi provisioning contract", () => {
 
     expect(steps).toHaveLength(1);
     expect(steps[0].key).toBe("alfi:evening-pipeline-audit");
+  });
+
+  test("disables every installed skill except Alfi creation skills", () => {
+    expect(
+      disabledSkillNames(
+        ["pdf", "github", "lead-triage", "lead-triage", "claude-code"],
+        ["lead-triage", "source-whatsapp"],
+      ),
+    ).toEqual(["claude-code", "github", "pdf"]);
+  });
+
+  test("parses Hermes skill table names", () => {
+    const table = `
+│ Name       │ Source  │
+│ pdf        │ builtin │
+│ lead-triage│ local   │
+`;
+    expect(parseHermesSkillListNames(table)).toEqual(["pdf", "lead-triage"]);
   });
 });

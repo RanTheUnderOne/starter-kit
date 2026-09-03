@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { ALFI_BUNDLE, ALFI_DEFAULT_CRON_JOBS } from "../src/generated/alfi-bundle";
+import { ALFI_BUNDLE, ALFI_DEFAULT_CRON_JOBS, ALFI_SKILL_NAMES } from "../src/generated/alfi-bundle";
 
 describe("generated Alfi bundle", () => {
   test("includes identity, configuration, skills, and cron defaults", () => {
@@ -31,5 +31,18 @@ describe("generated Alfi bundle", () => {
         expect(installed.has(`skills/${skill}/SKILL.md`), `${job.key}: ${skill}`).toBe(true);
       }
     }
+  });
+
+  test("exports Hermes skill names for every bundled SKILL.md", () => {
+    expect([...ALFI_SKILL_NAMES]).toEqual([
+      "alfi-whatsapp-mcp",
+      "crm-fireberry",
+      "follow-up-radar",
+      "lead-triage",
+      "morning-review",
+      "source-gmail",
+      "source-whatsapp",
+      "voice-note-to-action",
+    ]);
   });
 });

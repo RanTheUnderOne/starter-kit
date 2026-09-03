@@ -68,6 +68,8 @@ export const ALFI_BUNDLE = [
   }
 ] as const;
 
+export const ALFI_SKILL_NAMES = ["alfi-whatsapp-mcp","crm-fireberry","follow-up-radar","lead-triage","morning-review","source-gmail","source-whatsapp","voice-note-to-action"] as const;
+
 export const ALFI_DEFAULT_CRON_JOBS = [
   {
     "key": "alfi:evening-pipeline-audit",

@@ -12,25 +12,37 @@ import {
 
 const LIST_JOBS_COMMAND = `python3 - <<'PY'
 import json
-from cron.jobs import list_jobs
+from pathlib import Path
 
-jobs = list_jobs(include_disabled=True)
-print(json.dumps(jobs, ensure_ascii=False, default=str))
+path = Path.home() / '.hermes' / 'cron' / 'jobs.json'
+if not path.exists():
+    print('[]')
+else:
+    data = json.loads(path.read_text(encoding='utf-8'))
+    jobs = data.get('jobs', data if isinstance(data, list) else [])
+    print(json.dumps(jobs, ensure_ascii=False, default=str))
 PY`;
 
 function listRunsCommand(jobId: string, limit: number): string {
   const encodedJobId = Buffer.from(cronJobId.parse(jobId), "utf8").toString("base64");
   return `python3 - <<'PY'
-import base64, json
+import base64, json, sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
-from cron.executions import list_executions
-from hermes_constants import get_hermes_home
 
 job_id = base64.b64decode('${encodedJobId}').decode('utf-8')
 limit = ${Math.min(Math.max(limit, 1), 50)}
-runs = list_executions(job_id=job_id, limit=limit)
-output_dir = get_hermes_home() / 'cron' / 'output' / job_id
+home = Path.home() / '.hermes' / 'cron'
+runs = []
+db = home / 'executions.db'
+if db.exists():
+    con = sqlite3.connect(db)
+    con.row_factory = sqlite3.Row
+    runs = [dict(row) for row in con.execute(
+        'SELECT id, job_id, status, claimed_at, started_at, finished_at, error FROM executions WHERE job_id = ? ORDER BY claimed_at DESC LIMIT ?',
+        (job_id, limit),
+    )]
+output_dir = home / 'output' / job_id
 outputs = []
 if output_dir.is_dir():
     for path in sorted(output_dir.glob('*.md'), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]:
