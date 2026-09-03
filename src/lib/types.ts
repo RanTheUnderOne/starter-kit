@@ -61,6 +61,8 @@ export interface AgentWhatsAppConnection {
   phone_number_id: string | null;
   business_account_id: string | null;
   display_phone_number: string | null;
+  owner_phone_e164: string | null;
+  webhook_url: string | null;
   setup_expires_at: string | null;
   connected_at: string | null;
   created_at: string;
@@ -86,6 +88,7 @@ export interface Agent {
   // Older API versions reported the instance's ports; current ones return null —
   // any port is reachable at a preview URL, nothing is declared.
   ports: { port: number; default: boolean; url: string }[] | null;
+  public_ports?: { port: number; url: string; prefix?: string | null }[] | null;
   user: string | null;
   name: string | null;
   metadata: Record<string, unknown> | null;
