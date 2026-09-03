@@ -9,6 +9,7 @@ import { ChatMessages } from "./ChatMessages";
 import { useChatContext } from "./ChatProvider";
 import { useChat } from "./useChat";
 import { useChatAttachments } from "./useChatAttachments";
+import { useLocale } from "@/components/LocaleProvider";
 
 // The conversation pane, rendered full-height in the chat tab's main column. Empty state = a
 // centered welcome (heading + big composer + subtitle); once there are messages it becomes a
@@ -21,6 +22,7 @@ export function ChatView() {
     agents,
     sessions,
     activeSessionId,
+    onChatTab,
     composerFocusToken,
     requestComposerFocus,
     startNewChat,
@@ -28,6 +30,7 @@ export function ChatView() {
     registerRunKiller,
     bumpSession,
   } = useChatContext();
+  const { t } = useLocale();
   const { messages, isStreaming, loadingHistory, error, send, stop, killRun } = useChat({
     agentId,
     sessionId: activeSessionId,
@@ -37,6 +40,11 @@ export function ChatView() {
 
   // Deleting a thread from the rail must also stop any turn still streaming on it.
   useEffect(() => registerRunKiller(killRun), [registerRunKiller, killRun]);
+
+  // Returning to Chat (including Continue with Alfi) focuses the composer on desktop.
+  useEffect(() => {
+    if (onChatTab) requestComposerFocus();
+  }, [onChatTab, requestComposerFocus]);
 
   // Attachment state lives here (not in the composer) so the ENTIRE pane is a drop zone — a file
   // dropped anywhere over the transcript or composer lands in the same tray. A landed attachment
@@ -123,9 +131,12 @@ export function ChatView() {
         ) : messages.length > 0 ? (
           <ChatMessages messages={messages} isStreaming={isStreaming} />
         ) : (
-          <h1 className="text-[26px] font-semibold tracking-tight text-foreground sm:text-[30px]">
-            What can I help with?
-          </h1>
+          <div className="max-w-xl text-center">
+            <p className="text-[11px] font-bold tracking-[0.2em] text-teal-700">{t("chat.eyebrow")}</p>
+            <h1 className="mt-3 text-[26px] font-semibold tracking-tight text-teal-950 sm:text-[32px]">
+              {t("chat.title")}
+            </h1>
+          </div>
         )}
       </div>
 
@@ -153,9 +164,7 @@ export function ChatView() {
       {/* Bottom: balances the vertical centering and carries the welcome subtitle. */}
       {showWelcome && (
         <div className="flex flex-1 flex-col items-center px-4 pt-3">
-          <p className="text-sm text-muted-foreground">
-            The more context you give, the better your agent can help.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("chat.subtitle")}</p>
         </div>
       )}
     </div>

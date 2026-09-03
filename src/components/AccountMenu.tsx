@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useWorkspace } from "@/components/WorkspaceProvider";
 import { apiFetch } from "@/lib/api";
 import type { WorkspaceWithRole } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +35,7 @@ import {
 // inner one (top). Switching workspace routes to the fleet (/dashboard) of the newly selected
 // workspace — from the per-agent view that also escapes the agent's URL, whose effect would otherwise
 // immediately re-pin the old workspace.
-export function AccountMenu() {
+export function AccountMenu({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const { workspaces, current, setCurrentId, refresh, userEmail } = useWorkspace();
   const [creating, setCreating] = useState(false);
@@ -79,19 +80,27 @@ export function AccountMenu() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-auto w-full justify-between px-2 py-2 font-normal">
+          <Button
+            variant="ghost"
+            className={cn(
+              "h-auto justify-between px-2 py-2 font-normal",
+              compact ? "w-auto px-1" : "w-full"
+            )}
+          >
             <span className="flex min-w-0 items-center gap-2">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-medium text-secondary-foreground">
                 {initial}
               </span>
-              <span className="flex min-w-0 flex-col text-left">
-                <span className="truncate text-sm">{userEmail}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {current?.name ?? "Select workspace"}
+              {!compact && (
+                <span className="flex min-w-0 flex-col text-left">
+                  <span className="truncate text-sm">{userEmail}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {current?.name ?? "Select workspace"}
+                  </span>
                 </span>
-              </span>
+              )}
             </span>
-            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+            {!compact && <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="start" side="top">

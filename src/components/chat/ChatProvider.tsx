@@ -18,6 +18,11 @@ interface ChatContextValue {
   composerFocusToken: number;
   // Ping the composer to refocus its textarea (e.g. after an attachment lands).
   requestComposerFocus: () => void;
+  // One-shot quoted context for the composer. ChatComposer merges it into any unsent
+  // draft, then consumePrefill() so the same block cannot land twice.
+  pendingPrefill: string | null;
+  prefillComposer: (context: string) => void;
+  consumePrefill: () => void;
   loadingSessions: boolean;
   selectSession: (sessionId: string | null) => void;
   startNewChat: () => void;
@@ -70,6 +75,7 @@ export function ChatProvider({
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(urlSessionId);
   const [composerFocusToken, setComposerFocusToken] = useState(0);
+  const [pendingPrefill, setPendingPrefill] = useState<string | null>(null);
   const [loadingSessions, setLoadingSessions] = useState(true);
 
   // Adopt the thread from the URL whenever it changes — a rail click, Back/Forward, or a refresh.
@@ -113,6 +119,16 @@ export function ChatProvider({
   }, [agentId]);
 
   const requestComposerFocus = useCallback(() => setComposerFocusToken((n) => n + 1), []);
+  const prefillComposer = useCallback(
+    (context: string) => {
+      const next = context.trimEnd();
+      if (!next) return;
+      setPendingPrefill(`${next}\n\n`);
+      requestComposerFocus();
+    },
+    [requestComposerFocus]
+  );
+  const consumePrefill = useCallback(() => setPendingPrefill(null), []);
 
   const selectSession = useCallback(
     (sessionId: string | null) => {
@@ -226,6 +242,9 @@ export function ChatProvider({
       onChatTab,
       composerFocusToken,
       requestComposerFocus,
+      pendingPrefill,
+      prefillComposer,
+      consumePrefill,
       loadingSessions,
       selectSession,
       startNewChat,
@@ -235,7 +254,7 @@ export function ChatProvider({
       renameSession,
       bumpSession,
     }),
-    [agentId, agents, sessions, activeSessionId, onChatTab, composerFocusToken, requestComposerFocus, loadingSessions, selectSession, startNewChat, onSessionCreated, registerRunKiller, deleteSession, renameSession, bumpSession]
+    [agentId, agents, sessions, activeSessionId, onChatTab, composerFocusToken, requestComposerFocus, pendingPrefill, prefillComposer, consumePrefill, loadingSessions, selectSession, startNewChat, onSessionCreated, registerRunKiller, deleteSession, renameSession, bumpSession]
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

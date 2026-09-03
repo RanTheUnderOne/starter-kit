@@ -12,6 +12,7 @@ import { findModel, prettyModelLabel, type ChatSettings } from "./types";
 import type { SendSettings } from "./useChat";
 import { useWorkspace } from "@/components/WorkspaceProvider";
 import { useLocale } from "@/components/LocaleProvider";
+import { useChatContext } from "./ChatProvider";
 
 interface Props {
   agentId: string;
@@ -28,6 +29,7 @@ interface Props {
 export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large = false, focusToken = 0 }: Props) {
   const { isStaff } = useWorkspace();
   const { t } = useLocale();
+  const { pendingPrefill, consumePrefill } = useChatContext();
   const [text, setText] = useState("");
   // model + provider are always chosen together (one selection); effort is independent. Group
   // them as the composer's outgoing ChatSettings so send is just `{ ...settings, files }`.
@@ -36,6 +38,13 @@ export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large 
 
   const { groups, defaultModel, loading } = useChatModels(agentId, isStaff);
 
+  const grow = (el: HTMLTextAreaElement) => {
+    const minHeight = large ? 76 : 44;
+    const maxHeight = large ? 180 : 160;
+    el.style.height = "auto";
+    el.style.height = `${Math.max(minHeight, Math.min(el.scrollHeight, maxHeight))}px`;
+  };
+
   useEffect(() => {
     // Keep intentional focus requests on desktop, but do not reopen the virtual
     // keyboard when a touch device returns to the chat.
@@ -43,6 +52,19 @@ export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large 
     const frame = requestAnimationFrame(() => textareaRef.current?.focus());
     return () => cancelAnimationFrame(frame);
   }, [focusToken]);
+
+  useEffect(() => {
+    if (!pendingPrefill) return;
+    setText((current) => {
+      const existing = current.trim();
+      return existing ? `${pendingPrefill}${existing}` : pendingPrefill;
+    });
+    consumePrefill();
+  }, [pendingPrefill, consumePrefill]);
+
+  useEffect(() => {
+    if (textareaRef.current) grow(textareaRef.current);
+  }, [text, large]);
 
   useEffect(() => {
     const releaseFocus = () => {
@@ -68,13 +90,6 @@ export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large 
   }, [groups, defaultModel, loading]);
 
   const canSend = (text.trim().length > 0 || att.hasFiles) && !att.blocksSend && !isStreaming;
-
-  const grow = (el: HTMLTextAreaElement) => {
-    const minHeight = large ? 76 : 44;
-    const maxHeight = large ? 180 : 160;
-    el.style.height = "auto";
-    el.style.height = `${Math.max(minHeight, Math.min(el.scrollHeight, maxHeight))}px`;
-  };
 
   const submit = () => {
     if (isStreaming) return;
