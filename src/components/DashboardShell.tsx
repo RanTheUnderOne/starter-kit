@@ -27,7 +27,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="flex w-60 shrink-0 flex-col border-e bg-card p-4">
+      <aside className="flex w-64 shrink-0 flex-col border-e bg-card p-4">
         <div className="flex items-center gap-2 px-2 py-1">
           {branding.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

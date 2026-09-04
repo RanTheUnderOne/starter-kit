@@ -110,10 +110,7 @@ export function ChatComposer({ agentId, isStreaming, att, onSend, onStop, large 
 
   return (
     <div
-      className={cn(
-        "mx-auto w-full rounded-[20px] border border-border/80 bg-card shadow-[0_8px_30px_rgb(15_23_42_/_0.06)] transition-[border-color,box-shadow] focus-within:border-ring/50 focus-within:shadow-[0_10px_34px_rgb(15_23_42_/_0.1)]",
-        large ? "max-w-2xl" : "max-w-3xl"
-      )}
+      className="mx-auto w-full max-w-3xl rounded-2xl border border-border/80 bg-card shadow-[0_8px_30px_rgb(15_23_42_/_0.06)] transition-[border-color,box-shadow] focus-within:border-ring/50 focus-within:shadow-[0_10px_34px_rgb(15_23_42_/_0.1)]"
     >
       <textarea
         ref={textareaRef}

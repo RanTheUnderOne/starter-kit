@@ -3,20 +3,20 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.9rem;
+  --radius: 0.75rem;
   --background: oklch(0.985 0.012 87);
   --foreground: oklch(0.235 0.045 178);
   --card: oklch(0.998 0.005 87);
   --card-foreground: oklch(0.235 0.045 178);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.36 0.075 180);
+  --primary: oklch(0.28 0.065 178);
   --primary-foreground: oklch(0.99 0.01 85);
-  --secondary: oklch(0.93 0.04 166);
+  --secondary: oklch(0.94 0.035 166);
   --secondary-foreground: oklch(0.28 0.06 178);
-  --muted: oklch(0.955 0.018 87);
-  --muted-foreground: oklch(0.52 0.035 177);
-  --accent: oklch(0.9 0.065 164);
+  --muted: oklch(0.96 0.012 87);
+  --muted-foreground: oklch(0.50 0.035 177);
+  --accent: oklch(0.92 0.045 166);
   --accent-foreground: oklch(0.27 0.06 178);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
@@ -110,12 +110,20 @@
 
 @layer utilities {
   .alfi-panel {
-    background: color-mix(in srgb, white 90%, var(--alfi-cream));
-    border: 1px solid color-mix(in srgb, var(--alfi-ink) 10%, transparent);
-    box-shadow: 0 24px 70px -36px rgb(7 47 46 / 0.36);
+    background: color-mix(in srgb, var(--card) 92%, var(--alfi-cream));
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px -12px rgb(7 47 46 / 0.12), 0 2px 8px -2px rgb(7 47 46 / 0.04);
+  }
+  .dark .alfi-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.4);
   }
   .alfi-noise {
     background-image: radial-gradient(rgb(255 255 255 / 0.12) 0.6px, transparent 0.6px);
     background-size: 8px 8px;
+  }
+  .pb-safe-nav {
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
   }
 }

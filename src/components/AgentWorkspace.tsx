@@ -158,7 +158,7 @@ export function AgentWorkspace({
       navigateToSession={navigateToSession}
     >
       <div className="flex h-screen">
-        <aside className="hidden w-72 shrink-0 flex-col border-e border-white/10 bg-[#072f2e] text-[#f4fbf7] lg:flex [--accent:rgb(255_255_255_/_0.08)] [--accent-foreground:#fff] [--background:#072f2e] [--border:rgb(255_255_255_/_0.12)] [--card:#0b3b3a] [--foreground:#f4fbf7] [--input:rgb(255_255_255_/_0.14)] [--muted-foreground:rgb(244_251_247_/_0.58)] [--secondary:rgb(184_240_212_/_0.16)] [--secondary-foreground:#f4fbf7]">
+        <aside className="hidden w-64 shrink-0 flex-col border-e border-white/10 bg-[#072f2e] text-[#f4fbf7] lg:flex [--accent:rgb(255_255_255_/_0.08)] [--accent-foreground:#fff] [--background:#072f2e] [--border:rgb(255_255_255_/_0.12)] [--card:#0b3b3a] [--foreground:#f4fbf7] [--input:rgb(255_255_255_/_0.14)] [--muted-foreground:rgb(244_251_247_/_0.65)] [--secondary:rgb(184_240_212_/_0.16)] [--secondary-foreground:#f4fbf7]">
           <div className="flex flex-col p-4 pb-3">
             <div className="flex items-center gap-2 px-2 py-1">
               {branding.logoUrl ? (
@@ -221,12 +221,12 @@ export function AgentWorkspace({
           <main className="min-w-0 flex-1 overflow-hidden">
             {/* Chat owns its full height and stays MOUNTED (just hidden) across tab switches. */}
             {chatOpened && (
-              <div className={cn("h-full", isChat ? "pb-[calc(5.25rem+env(safe-area-inset-bottom))] lg:pb-0" : "hidden")}>
+              <div className={cn("h-full", isChat ? "pb-safe-nav lg:pb-0" : "hidden")}>
                 <ChatView />
               </div>
             )}
             {!isChat && (
-              <div className="h-full overflow-y-auto">
+              <div className="h-full overflow-y-auto pb-safe-nav lg:pb-0">
                 {currentTab === "schedules" && (
                   <SchedulesTab agentId={agentId} onContinue={continueWithAlfi} />
                 )}

@@ -133,11 +133,42 @@ export function ChatView() {
         ) : messages.length > 0 ? (
           <ChatMessages messages={messages} isStreaming={isStreaming} />
         ) : (
-          <div className="max-w-xl text-center">
-            <p className="text-[11px] font-bold tracking-[0.2em] text-teal-700">{t("chat.eyebrow")}</p>
-            <h1 className="mt-3 text-[26px] font-semibold tracking-tight text-teal-950 sm:text-[32px]">
+          <div className="max-w-2xl text-center px-4">
+            <p className="text-[11px] font-bold tracking-[0.2em] text-primary/80 uppercase">{t("chat.eyebrow")}</p>
+            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
               {t("chat.title")}
             </h1>
+            <p className="mt-2 text-sm text-muted-foreground">{t("chat.subtitle")}</p>
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => send(t("chat.starter.leads"), { model: null, provider: null, reasoningEffort: null, files: [], attachments: [] })}
+                className="rounded-full border border-border/80 bg-card/80 px-3.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary hover:border-primary/20 shadow-xs"
+              >
+                ✨ {t("chat.starter.leads")}
+              </button>
+              <button
+                type="button"
+                onClick={() => send(t("chat.starter.whatsapp"), { model: null, provider: null, reasoningEffort: null, files: [], attachments: [] })}
+                className="rounded-full border border-border/80 bg-card/80 px-3.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary hover:border-primary/20 shadow-xs"
+              >
+                💬 {t("chat.starter.whatsapp")}
+              </button>
+              <button
+                type="button"
+                onClick={() => send(t("chat.starter.briefing"), { model: null, provider: null, reasoningEffort: null, files: [], attachments: [] })}
+                className="rounded-full border border-border/80 bg-card/80 px-3.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary hover:border-primary/20 shadow-xs"
+              >
+                ☀️ {t("chat.starter.briefing")}
+              </button>
+              <button
+                type="button"
+                onClick={() => send(t("chat.starter.schedules"), { model: null, provider: null, reasoningEffort: null, files: [], attachments: [] })}
+                className="rounded-full border border-border/80 bg-card/80 px-3.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary hover:border-primary/20 shadow-xs"
+              >
+                ⏱️ {t("chat.starter.schedules")}
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -149,7 +180,7 @@ export function ChatView() {
         {!showWelcome && (
           <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent" />
         )}
-        <div className={cn("mx-auto w-full", showWelcome ? "max-w-2xl" : "max-w-3xl")} aria-live="polite">
+        <div className="mx-auto w-full max-w-3xl" aria-live="polite">
           {error && <p className="mb-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
         </div>
         <ChatComposer
@@ -166,7 +197,6 @@ export function ChatView() {
       {/* Bottom: balances the vertical centering and carries the welcome subtitle. */}
       {showWelcome && (
         <div className="flex flex-1 flex-col items-center gap-4 px-4 pt-3">
-          <p className="text-sm text-muted-foreground">{t("chat.subtitle")}</p>
           <TalkToAlfiWhatsAppLink fallbackHref={agentTabPath(agentId, "whatsapp")} />
         </div>
       )}
