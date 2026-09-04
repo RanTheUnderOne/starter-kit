@@ -99,33 +99,33 @@ export function WhatsAppStatusSection({
 
   return (
     <div className="space-y-5">
-      <section className="rounded-[24px] border border-teal-950/8 bg-white/70 p-5 sm:p-6">
+      <section className="rounded-2xl border bg-card p-5 sm:p-6 shadow-xs">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#d9f5e8] text-teal-800">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-primary">
               <MessageCircle className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-teal-950">{t("whatsappBusinessTitle")}</h2>
-              <p className="mt-1 text-sm leading-6 text-teal-950/55">{t("whatsappBusinessBody")}</p>
+              <h2 className="text-lg font-semibold text-foreground">{t("whatsappBusinessTitle")}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("whatsappBusinessBody")}</p>
             </div>
           </div>
-          <Badge variant={business?.connected ? "success" : "warning"}>
+          <Badge variant={business?.connected ? "success" : "warning"} className="rounded-full">
             {business ? connectionLabel(business.status) : t("common.loading")}
           </Badge>
         </div>
         {business?.connected && business.displayNumber && (
-          <p className="mt-4 text-sm font-medium text-teal-950">{business.displayNumber}</p>
+          <p className="mt-4 text-sm font-medium text-foreground">{business.displayNumber}</p>
         )}
         {role === "admin" && (
           <div className="mt-5 flex flex-wrap gap-2">
             {business?.canSetup && (
-              <Button className="rounded-full bg-teal-900 text-white hover:bg-teal-800" onClick={connect} disabled={busy}>
+              <Button className="rounded-lg" onClick={connect} disabled={busy}>
                 {t("whatsappBusinessTitle")}
               </Button>
             )}
             {business?.connected && (
-              <Button variant="outline" className="rounded-full" onClick={() => setConfirmRevoke(true)}>
+              <Button variant="outline" className="rounded-lg text-destructive hover:text-destructive" onClick={() => setConfirmRevoke(true)}>
                 {t("common.delete")}
               </Button>
             )}
@@ -133,18 +133,18 @@ export function WhatsAppStatusSection({
         )}
       </section>
 
-      <section className="rounded-[24px] border border-teal-950/8 bg-white/70 p-5 sm:p-6">
+      <section className="rounded-2xl border bg-card p-5 sm:p-6 shadow-xs">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#d9f5e8] text-teal-800">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-primary">
               <MessageCircle className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-teal-950">{t("whatsappOwnerTitle")}</h2>
-              <p className="mt-1 text-sm leading-6 text-teal-950/55">{t("whatsappOwnerBody")}</p>
+              <h2 className="text-lg font-semibold text-foreground">{t("whatsappOwnerTitle")}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("whatsappOwnerBody")}</p>
             </div>
           </div>
-          <Badge variant={owner?.ready ? "success" : "warning"}>{owner?.ready ? "Ready" : "Not ready"}</Badge>
+          <Badge variant={owner?.ready ? "success" : "warning"} className="rounded-full">{owner?.ready ? "Ready" : "Not ready"}</Badge>
         </div>
         {role === "admin" && (
           <div className="mt-5 space-y-2">
@@ -160,7 +160,7 @@ export function WhatsAppStatusSection({
                 onChange={(event) => setOwnerPhone(event.target.value)}
                 disabled={busy}
               />
-              <Button className="rounded-full" onClick={saveNumber} disabled={busy || !ownerPhone.trim()}>
+              <Button className="rounded-lg" onClick={saveNumber} disabled={busy || !ownerPhone.trim()}>
                 {t("common.save")}
               </Button>
             </div>
@@ -171,13 +171,13 @@ export function WhatsAppStatusSection({
             href={url}
             target="_blank"
             rel="noreferrer"
-            className="mt-5 inline-flex h-11 items-center rounded-full bg-teal-900 px-5 text-sm font-semibold text-white hover:bg-teal-800"
+            className="mt-5 inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
           >
             {t("whatsappOpen")}
           </a>
         )}
         {isStaff && status && !owner?.ready && (
-          <p className="mt-4 text-xs text-teal-950/45">Owner routing is not confirmed ready.</p>
+          <p className="mt-4 text-xs text-muted-foreground">Owner routing is not confirmed ready.</p>
         )}
       </section>
 

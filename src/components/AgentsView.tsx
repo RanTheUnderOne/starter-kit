@@ -23,8 +23,8 @@ import {
 import { AgentNameCell } from "@/components/AgentNameCell";
 import { CreateAgentButton } from "@/components/CreateAgentButton";
 import { OpenPortButtons } from "@/components/OpenPortButtons";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { useAsyncAction } from "@/components/useAsyncAction";
+import { AgentCard } from "@/components/AgentCard";
+import { AgentOptionsMenu } from "@/components/AgentOptionsMenu";
 
 export function AgentsView() {
   const { current, isStaff } = useWorkspace();
@@ -87,25 +87,21 @@ export function AgentsView() {
       {loading ? (
         <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
       ) : agents.length === 0 ? (
-        <div className="rounded-[28px] border border-dashed p-12 text-center">
-          <p className="text-sm font-medium text-teal-950">{t("fleet.empty")}</p>
+        <div className="rounded-2xl border border-dashed p-12 text-center bg-card">
+          <p className="text-sm font-medium text-foreground">{t("fleet.empty")}</p>
           <p className="mt-1 text-sm text-muted-foreground">{t("fleet.emptyBody")}</p>
         </div>
       ) : isStaff ? (
         <StaffFleetTable agents={agents} role={role} onChanged={load} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {agents.map((agent) => (
-            <Link
+            <AgentCard
               key={agent.agent37_id}
-              href={agentTabPath(agent.agent37_id, "chat")}
-              className="alfi-panel rounded-[28px] p-6 transition hover:border-teal-900/20"
-            >
-              <h2 className="text-lg font-semibold text-teal-950">
-                {agent.name?.trim() || t("nav.chat")}
-              </h2>
-              <p className="mt-2 text-sm text-teal-950/55">{t("fleet.open")}</p>
-            </Link>
+              agent={agent}
+              role={role}
+              onChanged={load}
+            />
           ))}
         </div>
       )}
@@ -165,7 +161,7 @@ function StaffFleetTable({
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center justify-end gap-2">
-                  <Button asChild variant="outline" size="sm">
+                  <Button asChild variant="outline" size="sm" className="rounded-lg">
                     <Link href={agentTabPath(a.agent37_id, "chat")}>
                       <MessageSquare className="h-4 w-4" />
                       Chat
@@ -187,64 +183,5 @@ function StaffFleetTable({
         </tbody>
       </table>
     </div>
-  );
-}
-
-function AgentOptionsMenu({ agent, onChanged }: { agent: MergedAgent; onChanged: () => void }) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const { busy, run } = useAsyncAction();
-  const running = agent.live_status === "running";
-  const transitional = isTransitional(agent.live_status);
-  const name = agent.name?.trim() || "this agent";
-
-  function action(path: "restart" | "stop", message: string) {
-    run(async () => {
-      await apiFetch(`/api/agents/${agent.agent37_id}/${path}`, { method: "POST" });
-      toast.success(message);
-      onChanged();
-    });
-  }
-
-  async function deleteAgent() {
-    await apiFetch(`/api/agents/${agent.agent37_id}`, { method: "DELETE" });
-    toast.success("Agent deleted");
-    onChanged();
-  }
-
-  return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Agent options">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem disabled={!running || busy} onClick={() => action("restart", "Restarting")}>
-            <RotateCw className="h-4 w-4" />
-            Restart agent
-          </DropdownMenuItem>
-          <DropdownMenuItem disabled={!running || transitional || busy} onClick={() => action("stop", "Stopping")}>
-            <Square className="h-4 w-4" />
-            Stop agent
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" disabled={busy} onClick={() => setConfirmDelete(true)}>
-            <Trash2 className="h-4 w-4" />
-            Delete agent
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <ConfirmDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        title="Delete agent?"
-        description={`This will permanently delete ${name}. This cannot be undone.`}
-        confirmText="Delete agent"
-        destructive
-        onConfirm={deleteAgent}
-      />
-    </>
   );
 }

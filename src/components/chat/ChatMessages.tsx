@@ -93,7 +93,7 @@ export function ChatMessages({ messages, isStreaming }: { messages: ChatMessage[
               <div className="flex max-w-[85%] flex-col items-end gap-1.5">
                 {attachments.length > 0 && <MessageAttachments attachments={attachments} />}
                 {m.content && (
-                  <div className="whitespace-pre-wrap break-words rounded-[18px] bg-secondary px-3.5 py-2 text-sm text-foreground">
+                  <div className="whitespace-pre-wrap break-words rounded-2xl bg-secondary px-4 py-2.5 text-sm text-foreground">
                     {m.content}
                   </div>
                 )}

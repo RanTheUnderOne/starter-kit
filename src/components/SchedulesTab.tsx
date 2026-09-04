@@ -24,6 +24,7 @@ import { useChatContext } from "@/components/chat/ChatProvider";
 import { formatCronResultContext } from "@/lib/cron-result-context";
 import { ScheduleEditor } from "@/components/ScheduleEditor";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { TabHeader } from "@/components/TabHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -151,30 +152,30 @@ export function SchedulesTab({
   const date = (value: string | null) => value ? formatter.format(new Date(value)) : t("schedules.never");
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-7 px-4 pb-28 pt-7 sm:px-7 lg:px-10 lg:pb-12 lg:pt-10">
-      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[11px] font-bold tracking-[0.2em] text-teal-700">{t("schedules.eyebrow")}</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] text-teal-950 sm:text-4xl">{t("schedules.title")}</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-teal-950/60">{t("schedules.subtitle")}</p>
-        </div>
-        <Button
-          className="h-11 rounded-full bg-teal-900 px-5 text-white shadow-lg shadow-teal-950/10 hover:bg-teal-800"
-          onClick={() => { setEditing(null); setEditorOpen(true); }}
-        >
-          <Plus className="h-4 w-4" /> {t("schedules.add")}
-        </Button>
-      </header>
+    <div className="mx-auto w-full max-w-6xl space-y-7 px-4 pt-7 sm:px-7 lg:px-10 lg:pt-10">
+      <TabHeader
+        eyebrow={t("schedules.eyebrow")}
+        title={t("schedules.title")}
+        subtitle={t("schedules.subtitle")}
+        actions={
+          <Button
+            className="h-10 rounded-lg px-4"
+            onClick={() => { setEditing(null); setEditorOpen(true); }}
+          >
+            <Plus className="h-4 w-4" /> {t("schedules.add")}
+          </Button>
+        }
+      />
 
       {loading ? (
-        <div className="alfi-panel flex min-h-64 items-center justify-center rounded-[28px]">
-          <Loader2 className="h-5 w-5 animate-spin text-teal-700" />
+        <div className="alfi-panel flex min-h-64 items-center justify-center rounded-2xl">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
         </div>
       ) : jobs.length === 0 ? (
-        <div className="alfi-panel rounded-[28px] px-6 py-16 text-center">
-          <CalendarClock className="mx-auto h-9 w-9 text-teal-700" />
-          <h2 className="mt-4 text-lg font-semibold text-teal-950">{t("schedules.empty")}</h2>
-          <p className="mt-1 text-sm text-teal-950/55">{t("schedules.emptyBody")}</p>
+        <div className="alfi-panel rounded-2xl px-6 py-16 text-center">
+          <CalendarClock className="mx-auto h-9 w-9 text-primary" />
+          <h2 className="mt-4 text-lg font-semibold text-foreground">{t("schedules.empty")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t("schedules.emptyBody")}</p>
         </div>
       ) : (
         <div className="grid gap-5 xl:grid-cols-2">
@@ -182,16 +183,16 @@ export function SchedulesTab({
             const open = expanded === job.id;
             const jobRuns = runs[job.id] ?? [];
             return (
-              <article key={job.id} className="alfi-panel overflow-hidden rounded-[28px]">
+              <article key={job.id} className="alfi-panel overflow-hidden rounded-2xl">
                 <div className="p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex min-w-0 items-start gap-3.5">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#d9f5e8] text-teal-800">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
                         <Sparkles className="h-5 w-5" />
                       </span>
                       <div className="min-w-0">
-                        <h2 className="truncate text-lg font-semibold tracking-tight text-teal-950">{job.displayName}</h2>
-                        <p className="mt-1 line-clamp-2 text-sm leading-5 text-teal-950/55">{job.prompt}</p>
+                        <h2 className="truncate text-lg font-semibold tracking-tight text-foreground">{job.displayName}</h2>
+                        <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">{job.prompt}</p>
                       </div>
                     </div>
                     <Badge variant={statusVariant(job.state)} className="shrink-0 rounded-full">
@@ -199,41 +200,41 @@ export function SchedulesTab({
                     </Badge>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-teal-950/[0.035] p-3 text-xs text-teal-950/65">
-                    <div className="flex gap-2"><Clock3 className="h-4 w-4 text-teal-700" /><span><b className="block font-semibold text-teal-950">{t("schedules.next")}</b>{date(job.nextRunAt)}</span></div>
-                    <div className="flex gap-2"><CirclePlay className="h-4 w-4 text-teal-700" /><span><b className="block font-semibold text-teal-950">{t("schedules.last")}</b>{date(job.lastRunAt)}</span></div>
+                  <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-muted/50 p-3 text-xs text-muted-foreground">
+                    <div className="flex gap-2"><Clock3 className="h-4 w-4 text-primary" /><span><b className="block font-semibold text-foreground">{t("schedules.next")}</b>{date(job.nextRunAt)}</span></div>
+                    <div className="flex gap-2"><CirclePlay className="h-4 w-4 text-primary" /><span><b className="block font-semibold text-foreground">{t("schedules.last")}</b>{date(job.lastRunAt)}</span></div>
                   </div>
 
                   <div className="mt-5 flex flex-wrap gap-2">
-                    <Button size="sm" className="rounded-full bg-teal-900 text-white hover:bg-teal-800" disabled={busyId === job.id} onClick={() => action(job, "run")}>
+                    <Button size="sm" className="rounded-lg" disabled={busyId === job.id} onClick={() => action(job, "run")}>
                       {busyId === job.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} {t("schedules.runNow")}
                     </Button>
-                    <Button size="sm" variant="outline" className="rounded-full" disabled={busyId === job.id} onClick={() => action(job, job.enabled ? "pause" : "resume")}>
+                    <Button size="sm" variant="outline" className="rounded-lg" disabled={busyId === job.id} onClick={() => action(job, job.enabled ? "pause" : "resume")}>
                       {job.enabled ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />} {t(job.enabled ? "schedules.pause" : "schedules.resume")}
                     </Button>
-                    <Button size="icon" variant="ghost" className="ms-auto h-8 w-8 rounded-full" onClick={() => { setEditing(job); setEditorOpen(true); }} aria-label={t("common.edit")}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full text-red-700 hover:text-red-800" onClick={() => setDeleting(job)} aria-label={t("common.delete")}><Trash2 className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" className="ms-auto h-8 w-8 rounded-lg" onClick={() => { setEditing(job); setEditorOpen(true); }} aria-label={t("common.edit")}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-destructive hover:text-destructive" onClick={() => setDeleting(job)} aria-label={t("common.delete")}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </div>
 
-                <button type="button" onClick={() => toggleResults(job)} className="flex w-full items-center justify-between border-t border-teal-950/8 bg-teal-950/[0.018] px-6 py-3 text-sm font-semibold text-teal-900 hover:bg-teal-950/[0.04]">
+                <button type="button" onClick={() => toggleResults(job)} className="flex w-full items-center justify-between border-t border-border/60 bg-muted/30 px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted/50">
                   <span>{t("schedules.results")}</span>{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </button>
                 {open && (
-                  <div className="space-y-3 border-t border-teal-950/8 bg-[#f8fbf7] p-4 sm:p-5">
+                  <div className="space-y-3 border-t border-border/60 bg-muted/20 p-4 sm:p-5">
                     {loadingRuns === job.id ? (
-                      <Loader2 className="mx-auto h-5 w-5 animate-spin text-teal-700" />
+                      <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" />
                     ) : jobRuns.length === 0 ? (
-                      <p className="py-4 text-center text-sm text-teal-950/50">{t("schedules.noResults")}</p>
+                      <p className="py-4 text-center text-sm text-muted-foreground">{t("schedules.noResults")}</p>
                     ) : jobRuns.map((run) => (
-                      <div key={run.id} className={cn("rounded-2xl border bg-white p-4", run.error && "border-red-200") }>
-                        <div className="flex items-center justify-between gap-3 text-xs text-teal-950/50">
+                      <div key={run.id} className={cn("rounded-xl border bg-card p-4", run.error && "border-destructive/40") }>
+                        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                           <span>{date(run.finishedAt ?? run.startedAt ?? run.claimedAt)}</span>
                           <span className="font-semibold uppercase tracking-wide">{run.status}</span>
                         </div>
-                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-teal-950/75">{run.output || run.error || t("schedules.noResults")}</p>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground">{run.output || run.error || t("schedules.noResults")}</p>
                         {run.output && (
-                          <Button variant="ghost" size="sm" className="mt-3 rounded-full text-teal-800" onClick={() => { prefillComposer(formatCronResultContext(job, run)); onContinue(job, run); }}>
+                          <Button variant="ghost" size="sm" className="mt-3 rounded-lg text-primary" onClick={() => { prefillComposer(formatCronResultContext(job, run)); onContinue(job, run); }}>
                             <MessageSquareText className="h-4 w-4" /> {t("schedules.continue")}
                           </Button>
                         )}
