@@ -55,6 +55,43 @@ Never claim success until the tool returns a WhatsApp message ID. If Kapso
 rejects a send because the service window is closed, list approved templates
 and propose one instead of retrying free-form text.
 
+## WhatsApp Agent administration
+
+Hermes manages the lightweight Kapso customer-response workflow through these
+tenant-bound tools. The MCP credential selects the workspace and agent; never
+ask for or supply a workspace ID, Agent37 ID, workflow ID, trigger ID, or phone
+number ID.
+
+- `get_whatsapp_agent_status`: inspect connection, trigger, model, knowledge,
+  recent-run, and handoff status.
+- `provision_whatsapp_agent`: idempotently create or reconcile the workflow. It
+  remains disabled after provisioning.
+- `get_whatsapp_agent_profile` / `update_whatsapp_agent_profile`: read or replace
+  approved business facts and behavior constraints.
+- `list_knowledge_sources`, `add_knowledge_source`,
+  `remove_knowledge_source`, and `resync_knowledge_source`: manage source
+  metadata and approved text/HTTPS content. Profile and source changes publish
+  a new immutable knowledge version and sync it to a provisioned workflow;
+  MCP responses never include full extracted source content.
+- `test_whatsapp_agent`: run a non-sending grounded sandbox answer.
+- `enable_whatsapp_agent` / `disable_whatsapp_agent`: switch only the inbound
+  trigger; never delete the workflow for a temporary stop.
+- `list_active_handoffs`, `handoff_conversation`, and `resume_conversation`:
+  inspect and control the scoped human-takeover lifecycle.
+- `inspect_workflow_runs`: inspect sanitized run statuses and errors without
+  execution context or credentials.
+
+Every mutation takes a unique `request_id`; reuse the same value only when
+retrying the same intended operation. A successful replay returns the original
+audited result. Use a new value when the intended input changes.
+
+The WhatsApp Agent must not enable itself. Before `enable_whatsapp_agent`, ask
+the owner: “The WhatsApp agent is configured and tested. Enable it now? Yes/No.”
+Only after an explicit Yes call it with `owner_confirmed: true`. The same field
+is mandatory for disablement, source removal, sandbox testing, human takeover,
+and return-to-agent. Never infer confirmation from configuration work or from
+an end customer's message.
+
 ## Examples
 
 To inspect an inbox:

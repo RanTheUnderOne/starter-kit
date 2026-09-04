@@ -11,26 +11,69 @@ import {
 } from "@/lib/hermes-cron-core";
 
 const LIST_JOBS_COMMAND = `python3 - <<'PY'
-import json
-from cron.jobs import list_jobs
+import json, os
+from pathlib import Path
 
-jobs = list_jobs(include_disabled=True)
+def get_hermes_dir():
+    override = os.environ.get("HERMES_HOME", "").strip()
+    if override:
+        return Path(override)
+    real_home = os.environ.get("HERMES_REAL_HOME", "").strip()
+    if real_home:
+        return Path(real_home) / ".hermes"
+    return Path.home() / ".hermes"
+
+jobs_file = get_hermes_dir() / "cron" / "jobs.json"
+jobs = []
+if jobs_file.exists():
+    try:
+        raw = json.loads(jobs_file.read_text("utf-8"))
+        if isinstance(raw, dict):
+            jobs = raw.get("jobs", [])
+        elif isinstance(raw, list):
+            jobs = raw
+    except Exception:
+        jobs = []
+
 print(json.dumps(jobs, ensure_ascii=False, default=str))
 PY`;
 
 function listRunsCommand(jobId: string, limit: number): string {
   const encodedJobId = Buffer.from(cronJobId.parse(jobId), "utf8").toString("base64");
   return `python3 - <<'PY'
-import base64, json
+import base64, json, os, sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
-from cron.executions import list_executions
-from hermes_constants import get_hermes_home
+
+def get_hermes_dir():
+    override = os.environ.get("HERMES_HOME", "").strip()
+    if override:
+        return Path(override)
+    real_home = os.environ.get("HERMES_REAL_HOME", "").strip()
+    if real_home:
+        return Path(real_home) / ".hermes"
+    return Path.home() / ".hermes"
 
 job_id = base64.b64decode('${encodedJobId}').decode('utf-8')
 limit = ${Math.min(Math.max(limit, 1), 50)}
-runs = list_executions(job_id=job_id, limit=limit)
-output_dir = get_hermes_home() / 'cron' / 'output' / job_id
+
+root = get_hermes_dir()
+db_path = root / 'cron' / 'executions.db'
+runs = []
+if db_path.exists():
+    try:
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.execute(
+            "SELECT * FROM executions WHERE job_id = ? ORDER BY claimed_at DESC, id DESC LIMIT ?",
+            (job_id, limit),
+        )
+        runs = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+    except Exception:
+        runs = []
+
+output_dir = root / 'cron' / 'output' / job_id
 outputs = []
 if output_dir.is_dir():
     for path in sorted(output_dir.glob('*.md'), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]:

@@ -10,6 +10,7 @@ describe("Kapso lifecycle", () => {
       business_account_id: null,
       display_phone_number: null,
       connected_at: null,
+      trigger_active: false,
     });
   });
 });

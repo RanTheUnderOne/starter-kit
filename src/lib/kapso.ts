@@ -63,6 +63,42 @@ export interface KapsoSetupLink {
   display_phone_number?: string | null;
 }
 
+export interface KapsoWorkflow {
+  id: string;
+  name: string;
+  slug: string;
+  status: "draft" | "active" | "archived";
+  lock_version: number;
+}
+
+export interface KapsoWorkflowTrigger {
+  id: string;
+  workflow_id: string;
+  trigger_type: "inbound_message" | "api_call" | "whatsapp_event" | "project_event";
+  active: boolean;
+  triggerable?: { phone_number_id?: string };
+}
+
+export interface KapsoWorkflowExecution {
+  id: string;
+  status: "running" | "waiting" | "ended" | "failed" | "handoff";
+  tracking_id?: string | null;
+  started_at?: string | null;
+  ended_at?: string | null;
+  whatsapp_conversation_id?: string | null;
+  workflow: { id: string; name?: string; slug?: string };
+  current_step?: { id?: string; name?: string; node_type?: string } | null;
+  execution_context?: Record<string, unknown>;
+  error_details?: Record<string, unknown> | null;
+}
+
+export interface KapsoWorkflowExecutionAccepted {
+  message: string;
+  workflow_id: string;
+  id: string;
+  tracking_id: string;
+}
+
 export const kapso = {
   createCustomer: async (name: string, externalCustomerId: string) => {
     const result = await kapsoFetch<{ data: KapsoCustomer }>(PLATFORM, "/customers", {
@@ -113,6 +149,155 @@ export const kapso = {
         display_phone_number?: string | null;
       };
     }>(PLATFORM, `/whatsapp/phone_numbers/${encodeURIComponent(phoneNumberId)}`);
+    return result.data;
+  },
+
+  listProviderModels: async () => {
+    const result = await kapsoFetch<{
+      data: Array<{ id: string; name: string; provider?: string | null }>;
+    }>(PLATFORM, "/provider_models");
+    return result.data;
+  },
+
+  listWorkflows: async (query: Query = {}) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflow[] }>(
+      PLATFORM,
+      `/workflows${queryString(query)}`
+    );
+    return result.data;
+  },
+
+  createWorkflow: async (workflow: Record<string, unknown>) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflow }>(PLATFORM, "/workflows", {
+      method: "POST",
+      body: JSON.stringify({ workflow }),
+    });
+    return result.data;
+  },
+
+  getWorkflow: async (workflowId: string) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflow }>(
+      PLATFORM,
+      `/workflows/${encodeURIComponent(workflowId)}`
+    );
+    return result.data;
+  },
+
+  getWorkflowDefinition: async (workflowId: string) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflow & { definition: unknown } }>(
+      PLATFORM,
+      `/workflows/${encodeURIComponent(workflowId)}/definition`
+    );
+    return result.data;
+  },
+
+  updateWorkflow: async (workflowId: string, workflow: Record<string, unknown>) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflow }>(
+      PLATFORM,
+      `/workflows/${encodeURIComponent(workflowId)}`,
+      { method: "PATCH", body: JSON.stringify({ workflow }) }
+    );
+    return result.data;
+  },
+
+  listWorkflowTriggers: async (workflowId: string) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflowTrigger[] }>(
+      PLATFORM,
+      `/workflows/${encodeURIComponent(workflowId)}/triggers`
+    );
+    return result.data;
+  },
+
+  replaceWorkflowTriggers: async (
+    workflowId: string,
+    triggers: Array<Record<string, unknown>>
+  ) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflowTrigger[] }>(
+      PLATFORM,
+      `/workflows/${encodeURIComponent(workflowId)}/triggers`,
+      { method: "PUT", body: JSON.stringify({ triggers }) }
+    );
+    return result.data;
+  },
+
+  updateWorkflowTrigger: async (triggerId: string, active: boolean) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflowTrigger }>(
+      PLATFORM,
+      `/triggers/${encodeURIComponent(triggerId)}`,
+      { method: "PATCH", body: JSON.stringify({ trigger: { active } }) }
+    );
+    return result.data;
+  },
+
+  listWorkflowExecutions: async (workflowId: string, query: Query = {}) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflowExecution[] }>(
+      PLATFORM,
+      `/workflows/${encodeURIComponent(workflowId)}/executions${queryString(query)}`
+    );
+    return result.data;
+  },
+
+  createWorkflowExecution: async (
+    workflowId: string,
+    workflowExecution: {
+      phone_number?: string;
+      recipient?: string;
+      phone_number_id?: string;
+      variables?: Record<string, unknown>;
+      context?: Record<string, unknown>;
+      initial_data?: Record<string, unknown>;
+    }
+  ) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflowExecutionAccepted }>(
+      PLATFORM,
+      `/workflows/${encodeURIComponent(workflowId)}/executions`,
+      {
+        method: "POST",
+        body: JSON.stringify({ workflow_execution: workflowExecution }),
+      }
+    );
+    return result.data;
+  },
+
+  getWorkflowExecution: async (executionId: string) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflowExecution }>(
+      PLATFORM,
+      `/workflow_executions/${encodeURIComponent(executionId)}`
+    );
+    return result.data;
+  },
+
+  updateWorkflowExecution: async (
+    executionId: string,
+    status: "ended" | "handoff" | "waiting"
+  ) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflowExecution }>(
+      PLATFORM,
+      `/workflow_executions/${encodeURIComponent(executionId)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ workflow_execution: { status } }),
+      }
+    );
+    return result.data;
+  },
+
+  resumeWorkflowExecution: async (
+    executionId: string,
+    message: unknown,
+    variables?: Record<string, unknown>
+  ) => {
+    const result = await kapsoFetch<{ data: KapsoWorkflowExecution }>(
+      PLATFORM,
+      `/workflow_executions/${encodeURIComponent(executionId)}/resume`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          message: { kind: "payload", data: message },
+          ...(variables ? { variables } : {}),
+        }),
+      }
+    );
     return result.data;
   },
 

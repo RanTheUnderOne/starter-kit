@@ -61,6 +61,20 @@ export interface AgentWhatsAppConnection {
   phone_number_id: string | null;
   business_account_id: string | null;
   display_phone_number: string | null;
+  kapso_workflow_id: string | null;
+  kapso_trigger_id: string | null;
+  workflow_status: "draft" | "active" | "archived" | null;
+  trigger_active: boolean;
+  provider_model_id: string | null;
+  provider_model_name: string | null;
+  workflow_provisioned_at: string | null;
+  workflow_last_synced_at: string | null;
+  workflow_last_error: string | null;
+  active_knowledge_version: number | null;
+  synced_knowledge_version: number | null;
+  knowledge_last_synced_at: string | null;
+  knowledge_last_error: string | null;
+  sandbox_tested_at?: string | null;
   owner_phone_e164: string | null;
   webhook_url: string | null;
   setup_expires_at: string | null;
@@ -83,6 +97,34 @@ export interface WhatsAppCustomerStatus {
     ready: boolean;
   };
 }
+
+export interface WhatsAppAgentRuntimeStatus {
+  runtime: {
+    provisioned: boolean;
+    workflowState: "draft" | "active" | "archived" | null;
+    triggerActive: boolean;
+    model: string | null;
+    lastRunStatus: "running" | "waiting" | "ended" | "failed" | "handoff" | null;
+    lastSyncedAt: string | null;
+    lastError: string | null;
+    activeKnowledgeVersion: number | null;
+    syncedKnowledgeVersion: number | null;
+    sandboxTestedAt: string | null;
+  };
+  conversations: Array<{
+    executionId: string;
+    conversationId: string | null;
+    status: "running" | "waiting" | "handoff";
+  }>;
+  handoffs: Array<{
+    executionId: string;
+    conversationId: string | null;
+    reason: string | null;
+    occurredAt: string;
+  }>;
+}
+
+export interface WhatsAppAgentDashboardStatus extends WhatsAppCustomerStatus, WhatsAppAgentRuntimeStatus {}
 
 export interface Agent {
   id: string;
