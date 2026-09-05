@@ -3,7 +3,7 @@ import { customerTabs, parseAgentTab, shouldEnterAgentDirectly, tabsFor } from "
 
 describe("customer navigation", () => {
   test("contains only product destinations", () => {
-    expect(customerTabs.map((tab) => tab.id)).toEqual(["chat", "schedules", "whatsapp", "business"]);
+    expect(customerTabs.map((tab) => tab.id)).toEqual(["chat", "schedules", "whatsapp", "business", "settings"]);
   });
 
   test("advanced is absent for customers and present for staff", () => {
@@ -14,6 +14,7 @@ describe("customer navigation", () => {
   test("server route parsing rejects staff tabs for customers", () => {
     expect(parseAgentTab(["advanced"], false)).toBeNull();
     expect(parseAgentTab(["advanced"], true)).toBe("advanced");
+    expect(parseAgentTab(["settings"], false)).toBe("settings");
     expect(parseAgentTab(undefined, false)).toBe("chat");
   });
 

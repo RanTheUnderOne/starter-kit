@@ -70,7 +70,7 @@ export function CreateAgentButton({
     setAgentId(null);
     setOwnerPhone("");
     setOpen(false);
-    router.push(`/dashboard/agents/${agentId}/settings`);
+    router.push(`/dashboard/agents/${agentId}/business`);
   }
 
   return (

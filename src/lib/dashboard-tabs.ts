@@ -3,6 +3,7 @@ export const customerTabs = [
   { id: "schedules", labelKey: "nav.schedules" },
   { id: "whatsapp", labelKey: "nav.whatsapp" },
   { id: "business", labelKey: "nav.business" },
+  { id: "settings", labelKey: "nav.agentSettings" },
 ] as const;
 
 export const staffTabs = [{ id: "advanced", labelKey: "nav.advanced" }] as const;

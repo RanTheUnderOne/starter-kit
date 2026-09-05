@@ -9,6 +9,7 @@ import {
   CalendarClock,
   MessageCircle,
   MessageSquare,
+  Settings,
   Shield,
   type LucideIcon,
 } from "lucide-react";
@@ -26,7 +27,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { AdvancedTab } from "@/components/AdvancedTab";
 import { BusinessTab } from "@/components/BusinessTab";
 import { SchedulesTab } from "@/components/SchedulesTab";
-import { WhatsAppTab } from "@/components/WhatsAppTab";
+import { SettingsTab } from "@/components/SettingsTab";
 import { ChatProvider } from "@/components/chat/ChatProvider";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatView } from "@/components/chat/ChatView";
@@ -37,6 +38,7 @@ const TAB_ICONS: Record<AgentTab, LucideIcon> = {
   schedules: CalendarClock,
   whatsapp: MessageCircle,
   business: Blocks,
+  settings: Settings,
   advanced: Shield,
 };
 
@@ -217,8 +219,10 @@ export function AgentWorkspace({
                 {currentTab === "schedules" && (
                   <SchedulesTab agentId={agentId} onContinue={continueWithAlfi} />
                 )}
-                {currentTab === "whatsapp" && <WhatsAppTab agentId={agentId} role={role} />}
-                {currentTab === "business" && <BusinessTab agentId={agentId} role={role} />}
+                {(currentTab === "business" || currentTab === "whatsapp") && (
+                  <BusinessTab agentId={agentId} role={role} />
+                )}
+                {currentTab === "settings" && <SettingsTab />}
                 {currentTab === "advanced" && isStaff && (
                   active ? (
                     <AdvancedTab agentId={agentId} agent={active} role={role} onChanged={load} />

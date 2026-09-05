@@ -17,6 +17,7 @@ import type {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useLocale } from "@/components/LocaleProvider";
 
 const SEARCH_DEBOUNCE_MS = 250;
 const MIN_SEARCH = 3; // the v1 toolkits route 400s a non-empty query shorter than this
@@ -59,6 +60,7 @@ export function IntegrationsTab({
   embedded?: boolean;
 }) {
   const isAdmin = role === "admin";
+  const { t, locale } = useLocale();
   const [tab, setTab] = useState<SubTab>("browse");
   const [search, setSearch] = useState("");
   const [toolkits, setToolkits] = useState<IntegrationToolkit[]>([]);
@@ -130,7 +132,7 @@ export function IntegrationsTab({
         const conns = await fetchConnections();
         if (isToolkitConnected(conns, slug)) {
           stopPolling();
-          toast.success("Connected");
+          toast.success(t("integrations.connected"));
           return;
         }
       } catch {
@@ -162,7 +164,7 @@ export function IntegrationsTab({
       await apiFetch(`/api/agents/${agentId}/integrations/connections/${connectedAccountId}`, {
         method: "DELETE",
       });
-      toast.success("Disconnected");
+      toast.success(t("integrations.disconnect"));
       await fetchConnections();
     } catch (e) {
       toast.error((e as Error).message);
@@ -182,10 +184,10 @@ export function IntegrationsTab({
   const toggle = (
     <div className="inline-flex rounded-lg border bg-card p-0.5 text-sm">
       <SubTabButton active={tab === "browse"} onClick={() => setTab("browse")}>
-        Browse
+        {t("integrations.browse")}
       </SubTabButton>
       <SubTabButton active={tab === "connected"} onClick={() => setTab("connected")}>
-        Connected
+        {t("integrations.connected")}
         {activeConnections.length > 0 && (
           <span className="ml-1.5 text-xs text-muted-foreground">{activeConnections.length}</span>
         )}
@@ -200,9 +202,9 @@ export function IntegrationsTab({
       ) : (
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight">Integrations</h1>
+            <h1 className="text-xl font-semibold tracking-tight">{t("business.title")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Connect third-party apps so this agent can act on your behalf.
+              {t("business.appsSubtitle")}
             </p>
           </div>
           {toggle}
@@ -212,57 +214,57 @@ export function IntegrationsTab({
       {tab === "browse" ? (
         <div className="space-y-4">
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search 1,000+ apps (e.g. github, gmail, slack)"
-              className="h-11 pl-9"
+              placeholder={t("integrations.search")}
+              className="h-11 ps-9"
             />
           </div>
 
           {tooShort ? (
             <p className="px-1 text-sm text-muted-foreground">
-              Type at least {MIN_SEARCH} characters to search.
+              {t("integrations.minSearch")}
             </p>
           ) : (
             <div className="space-y-2">
               <div className="px-1 text-xs font-medium text-muted-foreground">
-                {q.length === 0 ? "Popular integrations" : "Search results"}
+                {q.length === 0 ? t("integrations.popular") : t("integrations.results")}
               </div>
               {searching ? (
                 <div className={gridClass}>
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-[68px] animate-pulse rounded-xl border bg-muted/40" />
+                    <div key={i} className="h-[68px] animate-pulse rounded-[18px] border border-[#e2e7dd] bg-muted/40" />
                   ))}
                 </div>
               ) : visibleToolkits.length === 0 ? (
                 <p className="px-1 py-8 text-center text-sm text-muted-foreground">
-                  No apps found for “{q}”.
+                  {locale === "he" ? `לא נמצאו אפליקציות עבור “${q}”.` : `No apps found for “${q}”.`}
                 </p>
               ) : (
                 <div className={gridClass}>
-                  {visibleToolkits.map((t) => {
-                    const connected = isToolkitConnected(connections, t.slug);
-                    const busy = connecting === t.slug || pendingSlug === toolkitKey(t.slug);
+                  {visibleToolkits.map((toolkit) => {
+                    const connected = isToolkitConnected(connections, toolkit.slug);
+                    const busy = connecting === toolkit.slug || pendingSlug === toolkitKey(toolkit.slug);
                     return (
                       <div
-                        key={t.slug}
-                        className="flex items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-secondary/40"
+                        key={toolkit.slug}
+                        className="alfi-surface flex items-center gap-3 p-3 transition-colors hover:bg-secondary/40"
                       >
-                        <ToolkitLogo logo={t.logo} name={t.name} />
+                        <ToolkitLogo logo={toolkit.logo} name={toolkit.name} />
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium">{t.name}</div>
-                          {t.description && (
+                          <div className="truncate text-sm font-medium">{toolkit.name}</div>
+                          {toolkit.description && (
                             <div className="truncate text-xs text-muted-foreground">
-                              {t.description}
+                              {toolkit.description}
                             </div>
                           )}
                         </div>
                         {connected ? (
                           <Badge variant="success" className="shrink-0 gap-1">
                             <Check className="h-3 w-3" />
-                            Added
+                            {t("integrations.added")}
                           </Badge>
                         ) : isAdmin ? (
                           <Button
@@ -270,16 +272,16 @@ export function IntegrationsTab({
                             variant="outline"
                             className="h-8 shrink-0 gap-1.5 px-3 text-xs"
                             disabled={busy}
-                            onClick={() => connect(t.slug)}
+                            onClick={() => connect(toolkit.slug)}
                           >
                             {busy ? (
                               <>
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                Waiting
+                                {t("integrations.waiting")}
                               </>
                             ) : (
                               <>
-                                Connect
+                                {t("integrations.connect")}
                                 <ExternalLink className="h-3.5 w-3.5" />
                               </>
                             )}
@@ -295,24 +297,24 @@ export function IntegrationsTab({
 
           {pendingSlug && (
             <p className="px-1 text-xs text-muted-foreground">
-              Waiting for you to finish connecting in the other tab…
+              {t("integrations.pending")}
             </p>
           )}
         </div>
       ) : (
         <div className="space-y-3">
           {loadingConns ? (
-            <p className="py-2 text-sm text-muted-foreground">Loading…</p>
+            <p className="py-2 text-sm text-muted-foreground">{t("common.loading")}</p>
           ) : activeConnections.length === 0 ? (
-            <div className="rounded-xl border border-dashed px-6 py-12 text-center">
+            <div className="alfi-surface border-dashed px-6 py-12 text-center">
               <Plug className="mx-auto h-6 w-6 text-muted-foreground" />
-              <p className="mt-3 text-sm text-muted-foreground">No apps connected yet.</p>
+              <p className="mt-3 text-sm text-muted-foreground">{t("integrations.none")}</p>
               <Button variant="outline" size="sm" className="mt-4" onClick={() => setTab("browse")}>
-                Browse apps
+                {t("integrations.browseApps")}
               </Button>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border">
+            <div className="alfi-surface overflow-hidden">
               {activeConnections.map((c, i) => {
                 const slug = connToolkitSlug(c);
                 const isPending = pendingSlug === toolkitKey(slug);
@@ -327,12 +329,12 @@ export function IntegrationsTab({
                     <div className="flex min-w-0 items-center gap-2.5">
                       <ToolkitLogo logo={slug ? composioLogoUrl(slug) : null} name={c.toolkitName || slug || "?"} />
                       <span className="truncate font-medium">
-                        {c.toolkitName || c.toolkitSlug || slug || "Unknown app"}
+                        {c.toolkitName || c.toolkitSlug || slug || t("integrations.unknown")}
                       </span>
                       {isActive(c) ? (
-                        <Badge variant="success">Connected</Badge>
+                        <Badge variant="success">{t("integrations.connected")}</Badge>
                       ) : (
-                        <Badge variant="warning">{c.status || "Pending"}</Badge>
+                        <Badge variant="warning">{c.status || t("integrations.waiting")}</Badge>
                       )}
                     </div>
                     {isAdmin && (
@@ -349,7 +351,7 @@ export function IntegrationsTab({
                           ) : (
                             <Plus className="h-3.5 w-3.5" />
                           )}
-                          Add another
+                          {t("integrations.addAnother")}
                         </Button>
                         <Button
                           variant="ghost"
@@ -363,7 +365,7 @@ export function IntegrationsTab({
                           ) : (
                             <Unplug className="h-3.5 w-3.5" />
                           )}
-                          Disconnect
+                          {t("integrations.disconnect")}
                         </Button>
                       </div>
                     )}
