@@ -159,7 +159,7 @@ export function SchedulesTab({
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{t("schedules.subtitle")}</p>
         </div>
         <Button
-          className="h-11 rounded-full bg-teal-900 px-5 text-white shadow-lg shadow-teal-950/10 hover:bg-teal-800"
+          className="h-11 rounded-full px-5"
           onClick={() => { setEditing(null); setEditorOpen(true); }}
         >
           <Plus className="h-4 w-4" /> {t("schedules.add")}
@@ -186,7 +186,7 @@ export function SchedulesTab({
                 <div className="p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex min-w-0 items-start gap-3.5">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#d9f5e8] text-teal-800">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-secondary text-foreground">
                         <Sparkles className="h-5 w-5" />
                       </span>
                       <div className="min-w-0">
@@ -199,13 +199,13 @@ export function SchedulesTab({
                     </Badge>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-teal-950/[0.035] p-3 text-xs text-foreground/65">
+                  <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-muted p-3 text-xs text-foreground/65">
                     <div className="flex gap-2"><Clock3 className="h-4 w-4 text-muted-foreground" /><span><b className="block font-semibold text-foreground">{t("schedules.next")}</b>{date(job.nextRunAt)}</span></div>
                     <div className="flex gap-2"><CirclePlay className="h-4 w-4 text-muted-foreground" /><span><b className="block font-semibold text-foreground">{t("schedules.last")}</b>{date(job.lastRunAt)}</span></div>
                   </div>
 
                   <div className="mt-5 flex flex-wrap gap-2">
-                    <Button size="sm" className="rounded-full bg-teal-900 text-white hover:bg-teal-800" disabled={busyId === job.id} onClick={() => action(job, "run")}>
+                    <Button size="sm" className="rounded-full" disabled={busyId === job.id} onClick={() => action(job, "run")}>
                       {busyId === job.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} {t("schedules.runNow")}
                     </Button>
                     <Button size="sm" variant="outline" className="rounded-full" disabled={busyId === job.id} onClick={() => action(job, job.enabled ? "pause" : "resume")}>
@@ -216,11 +216,11 @@ export function SchedulesTab({
                   </div>
                 </div>
 
-                <button type="button" onClick={() => toggleResults(job)} className="flex w-full items-center justify-between border-t border-border bg-teal-950/[0.018] px-6 py-3 text-sm font-semibold text-foreground hover:bg-teal-950/[0.04]">
+                <button type="button" onClick={() => toggleResults(job)} className="flex w-full items-center justify-between border-t border-border bg-muted/60 px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted">
                   <span>{t("schedules.results")}</span>{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </button>
                 {open && (
-                  <div className="space-y-3 border-t border-border bg-[#f8fbf7] p-4 sm:p-5">
+                  <div className="space-y-3 border-t border-border bg-muted/40 p-4 sm:p-5">
                     {loadingRuns === job.id ? (
                       <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
                     ) : jobRuns.length === 0 ? (
@@ -233,7 +233,7 @@ export function SchedulesTab({
                         </div>
                         <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground/75">{run.output || run.error || t("schedules.noResults")}</p>
                         {run.output && (
-                          <Button variant="ghost" size="sm" className="mt-3 rounded-full text-teal-800" onClick={() => { prefillComposer(formatCronResultContext(job, run)); onContinue(job, run); }}>
+                          <Button variant="ghost" size="sm" className="mt-3 rounded-full" onClick={() => { prefillComposer(formatCronResultContext(job, run)); onContinue(job, run); }}>
                             <MessageSquareText className="h-4 w-4" /> {t("schedules.continue")}
                           </Button>
                         )}

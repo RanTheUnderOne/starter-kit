@@ -29,7 +29,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col md:flex-row">
       <aside className="flex w-full shrink-0 flex-col border-b bg-muted/60 p-5 md:w-60 md:border-b-0 md:border-e">
         <div className="flex items-center gap-2 px-2 py-1">
-          <AlfiLogo />
+          <AlfiLogo compact />
         </div>
 
         <nav className="mt-6 flex flex-row flex-wrap gap-1 md:flex-col">

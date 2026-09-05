@@ -1,3 +1,4 @@
+import { branding } from "@/config/branding";
 import { cn } from "@/lib/utils";
 
 /** A dotted capital A: solid at the base, lighter toward the apex. */
@@ -14,11 +15,21 @@ export function AlfiMark({ className }: { className?: string }) {
   );
 }
 
-export function AlfiLogo({ className }: { className?: string }) {
+export function AlfiLogo({ className, compact = false }: { className?: string; compact?: boolean }) {
   return (
-    <span dir="ltr" role="img" aria-label="Alfi" className={cn("inline-flex items-center gap-2.5 text-foreground", className)}>
-      <AlfiMark />
-      <span aria-hidden="true" className="text-[32px] font-semibold leading-none tracking-[-0.065em]">Alfi</span>
+    <span
+      dir="ltr"
+      role="img"
+      aria-label={branding.appName}
+      className={cn("inline-flex items-center text-foreground", compact ? "gap-2" : "gap-2.5", className)}
+    >
+      <AlfiMark className={compact ? "size-6" : undefined} />
+      <span
+        aria-hidden="true"
+        className={cn("font-semibold leading-none tracking-[-0.065em]", compact ? "text-lg" : "text-[32px]")}
+      >
+        {branding.appName}
+      </span>
     </span>
   );
 }

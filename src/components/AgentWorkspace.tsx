@@ -161,7 +161,7 @@ export function AgentWorkspace({
         <aside className="hidden w-64 shrink-0 flex-col border-e bg-muted/60 text-foreground lg:flex">
           <div className="flex flex-col p-4 pb-3">
             <div className="flex items-center gap-2 px-2 py-1">
-              <AlfiLogo />
+              <AlfiLogo compact />
             </div>
 
             <Link
@@ -291,9 +291,10 @@ function WorkspaceNav({
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
-              isActive && staffOnly && "bg-secondary text-foreground",
+              isActive && staffOnly && "bg-amber-500/15 text-amber-950",
               isActive && !staffOnly && "bg-secondary text-foreground",
-              !isActive && "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              !isActive && staffOnly && "text-amber-800 hover:bg-amber-500/10 hover:text-amber-950",
+              !isActive && !staffOnly && "text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}
           >
             <Icon className="h-4 w-4" />

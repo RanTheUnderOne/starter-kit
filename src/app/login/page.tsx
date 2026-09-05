@@ -10,7 +10,6 @@ import { MIN_PASSWORD } from "@/config/auth";
 import { publicSiteOrigin, safeNextPath } from "@/lib/site-url";
 import { toast } from "sonner";
 import { TalkToAlfiWhatsAppLink } from "@/components/TalkToAlfiWhatsAppLink";
-
 import { AlfiLogo } from "@/components/AlfiLogo";
 
 type Mode = "signin" | "signup" | "reset";
@@ -120,7 +119,7 @@ export default function LoginPage() {
   const copy = COPY[mode];
 
   return (
-    <main className="alfi-login" dir="ltr">
+    <main className="alfi-login">
       <section className="alfi-login-form">
         <AlfiLogo />
         <div className="alfi-login-content space-y-7">
@@ -219,7 +218,7 @@ export default function LoginPage() {
       </section>
       <aside className="alfi-login-art" aria-label="Alfi business agent">
         <p className="text-sm text-white/70">A little less busywork. A lot more possibility.</p>
-        <AlfiLogo className="alfi-art-logo" />
+        <AlfiLogo className="alfi-art-logo text-white" />
         <div className="max-w-md">
           <h2 className="text-4xl font-medium leading-[1.12] tracking-tight lg:text-5xl">Your business.<br />Working together.</h2>
           <p className="mt-5 max-w-sm text-base leading-relaxed text-white/65">One place to chat, connect your tools, and put your agent to work.</p>
