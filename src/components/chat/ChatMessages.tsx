@@ -4,6 +4,9 @@ import { useState } from "react";
 import { Check, ChevronDown, ChevronRight, FileText, Image as ImageIcon, Loader2, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Markdown } from "./Markdown";
+import { AlfiMark } from "@/components/AlfiLogo";
+import { useWorkspace } from "@/components/WorkspaceProvider";
+import { useLocale } from "@/components/LocaleProvider";
 import type { ChatMessage, MessageAttachment, ToolEvent } from "./types";
 
 // Files that rode along with a user turn, shown as compact chips above the message bubble.
@@ -83,17 +86,21 @@ function TypingDots() {
 }
 
 export function ChatMessages({ messages, isStreaming }: { messages: ChatMessage[]; isStreaming: boolean }) {
+  const { isStaff } = useWorkspace();
+  const { locale } = useLocale();
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-5 px-5 py-6">
+    <div className="mx-auto w-full max-w-3xl space-y-9 px-5 py-8 sm:px-8">
       {messages.map((m, i) => {
         if (m.role === "user") {
           const attachments = m.attachments ?? [];
           return (
-            <div key={m.id} className="flex justify-end">
-              <div className="flex max-w-[85%] flex-col items-end gap-1.5">
+            <div key={m.id} className="flex items-start gap-3">
+              <span aria-hidden="true" className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#eef0eb] text-[11px] font-medium text-[#657064]">{locale === "he" ? "א" : "Y"}</span>
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <p className="pt-1 text-xs font-medium text-foreground">{locale === "he" ? "את/ה" : "You"}</p>
                 {attachments.length > 0 && <MessageAttachments attachments={attachments} />}
                 {m.content && (
-                  <div className="whitespace-pre-wrap break-words rounded-[18px] bg-secondary px-3.5 py-2 text-sm text-foreground">
+                  <div className="whitespace-pre-wrap break-words text-sm leading-7 text-foreground">
                     {m.content}
                   </div>
                 )}
@@ -108,15 +115,20 @@ export function ChatMessages({ messages, isStreaming }: { messages: ChatMessage[
           lastAssistant && isStreaming && !m.content && !m.thinking && !tools.some((t) => t.status === "running");
 
         return (
-          <div key={m.id} className="flex justify-start">
-            <div className="min-w-0 max-w-full">
-              {m.thinking && <ThinkingBlock content={m.thinking} live={lastAssistant && isStreaming && !m.content} />}
+          <div key={m.id} className="flex items-start gap-3">
+            <AlfiMark className="size-7" />
+            <div className="min-w-0 flex-1">
+              <p className="mb-3 pt-1 text-xs font-medium text-foreground">Alfi</p>
+              {isStaff && m.thinking && <ThinkingBlock content={m.thinking} live={lastAssistant && isStreaming && !m.content} />}
               {tools.length > 0 && (
-                <div className="mb-3 space-y-2">
+                <details className="mb-3 text-xs text-muted-foreground">
+                  <summary className="cursor-pointer py-1">{tools.length} {locale === "he" ? "פעולות" : "actions"}{tools.some(t => t.status === "error") ? (locale === "he" ? " · נדרשת בדיקה" : " · needs attention") : ""}</summary>
+                  <div className="mt-2 space-y-2">
                   {tools.map((t, k) => (
-                    <ToolChip key={`${t.tool}-${k}`} tool={t} />
+                    isStaff ? <ToolChip key={`${t.tool}-${k}`} tool={t} /> : <div key={`${t.tool}-${k}`} className="rounded-lg border px-3 py-2">{locale === "he" ? "פעולה" : "Action"} {k + 1}<span className="ms-2">{t.status === "error" ? (locale === "he" ? "לא הושלמה" : "Could not complete") : t.status === "running" ? (locale === "he" ? "בתהליך" : "In progress") : (locale === "he" ? "הושלמה" : "Completed")}</span></div>
                   ))}
-                </div>
+                  </div>
+                </details>
               )}
               {m.content ? <Markdown content={m.content} /> : showDots ? <TypingDots /> : null}
             </div>

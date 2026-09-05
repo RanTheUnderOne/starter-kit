@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AlfiMark } from "@/components/AlfiLogo";
+import { History, Plus } from "lucide-react";
+import { ChatStarters } from "./ChatStarters";
+import { ChatSidebar } from "./ChatSidebar";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useWorkspace } from "@/components/WorkspaceProvider";
 import { cn } from "@/lib/utils";
 import { DropOverlay } from "@/components/DropOverlay";
 import { ChatComposer } from "./ChatComposer";
@@ -10,8 +15,8 @@ import { useChatContext } from "./ChatProvider";
 import { useChat } from "./useChat";
 import { useChatAttachments } from "./useChatAttachments";
 import { useLocale } from "@/components/LocaleProvider";
-import { TalkToAlfiWhatsAppLink } from "@/components/TalkToAlfiWhatsAppLink";
-import { agentTabPath } from "@/lib/dashboard-tabs";
+
+
 
 // The conversation pane, rendered full-height in the chat tab's main column. Empty state = a
 // centered welcome (heading + big composer + subtitle); once there are messages it becomes a
@@ -32,7 +37,10 @@ export function ChatView() {
     registerRunKiller,
     bumpSession,
   } = useChatContext();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const he = locale === "he";
+  const { isStaff } = useWorkspace();
+  const [historyOpen, setHistoryOpen] = useState(false);
   const { messages, isStreaming, loadingHistory, error, send, stop, killRun } = useChat({
     agentId,
     sessionId: activeSessionId,
@@ -82,30 +90,29 @@ export function ChatView() {
     () => sessions.find((s) => s.session_id === activeSessionId)?.title?.trim(),
     [sessions, activeSessionId]
   );
-  const headerTitle = activeTitle || (activeSessionId ? "Chat" : "New chat");
-  const agentName = useMemo(() => {
-    const a = agents.find((x) => x.agent37_id === agentId);
-    return a?.name?.trim() || agentId;
-  }, [agents, agentId]);
+  const headerTitle = activeTitle || (he ? "שיחה עם Alfi" : "Your conversation with Alfi");
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col" {...att.dragHandlers}>
+    <div className="alfi-chat relative flex h-full min-h-0 flex-col" {...att.dragHandlers}>
       {att.dragOver && <DropOverlay label="Drop files to attach" />}
-      <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background px-6 md:px-10">
+      <header className="alfi-chat-header flex shrink-0 items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="truncate text-base font-semibold text-foreground">{headerTitle}</h1>
-          <p className="truncate text-xs text-muted-foreground">{agentName}</p>
+          <h1 className="truncate text-sm font-medium text-foreground">{headerTitle}</h1>
+          
         </div>
         <button
           type="button"
           onClick={startNewChat}
-          aria-label="New chat"
-          title="New chat"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          aria-label={he ? "שיחה חדשה" : "New conversation"}
+          title={he ? "שיחה חדשה" : "New conversation"}
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-border bg-white px-3 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         >
           <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">{he ? "שיחה חדשה" : "New conversation"}</span>
         </button>
       </header>
+      <button className="mx-5 mt-3 flex items-center gap-2 self-start text-xs text-muted-foreground lg:hidden" onClick={() => setHistoryOpen(true)}><History size={15} />{he ? "השיחות שלך" : "Your conversations"}</button>
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}><DialogContent className="flex max-h-[80dvh] flex-col"><DialogTitle>{he ? "השיחות שלך" : "Your conversations"}</DialogTitle><DialogDescription>{he ? "ממשיכים מהמקום שבו עצרת." : "Pick up where you left off."}</DialogDescription><div className="min-h-0 overflow-auto" onClick={event => { if ((event.target as HTMLElement).closest("button")) setHistoryOpen(false); }}><ChatSidebar /></div></DialogContent></Dialog>
       {/* Top: scrolling transcript when there are messages; the centered welcome heading when
           empty (justify-end seats it just above the composer). */}
       <div
@@ -133,11 +140,13 @@ export function ChatView() {
         ) : messages.length > 0 ? (
           <ChatMessages messages={messages} isStreaming={isStreaming} />
         ) : (
-          <div className="max-w-xl text-center">
-            <p className="text-[11px] font-bold tracking-[0.2em] text-teal-700">{t("chat.eyebrow")}</p>
-            <h1 className="mt-3 text-[26px] font-semibold tracking-tight text-teal-950 sm:text-[32px]">
-              {t("chat.title")}
+          <div className="max-w-xl pb-3 text-center">
+            <span className="alfi-welcome-orb"><AlfiMark className="size-16" /></span>
+            <p className="alfi-eyebrow mt-6">{he ? "השותף שלך לעסק" : "YOUR PARTNER IN BUSINESS"}</p>
+            <h1 className="alfi-welcome-title">
+              {he ? "נעשה סדר ביום שלך." : "A little clarity. A lot of progress."}
             </h1>
+            <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-muted-foreground">{he ? "לידים, לקוחות והצעד הבא. על מה נעבוד יחד?" : "Your leads, your customers, and the next step. What shall we work on?"}</p>
           </div>
         )}
       </div>
@@ -150,7 +159,7 @@ export function ChatView() {
           <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent" />
         )}
         <div className={cn("mx-auto w-full", showWelcome ? "max-w-2xl" : "max-w-3xl")} aria-live="polite">
-          {error && <p className="mb-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
+          {error && <p role="alert" className="mb-2 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{isStaff ? error : he ? "לא הצלחנו להשלים את הבקשה. אפשר לנסות שוב; ההודעה שלך נשארה בשיחה." : "We could not complete this request. Please try again; your message remains in the conversation."}</p>}
         </div>
         <ChatComposer
           agentId={agentId}
@@ -165,9 +174,9 @@ export function ChatView() {
 
       {/* Bottom: balances the vertical centering and carries the welcome subtitle. */}
       {showWelcome && (
-        <div className="flex flex-1 flex-col items-center gap-4 px-4 pt-3">
-          <p className="text-sm text-muted-foreground">{t("chat.subtitle")}</p>
-          <TalkToAlfiWhatsAppLink fallbackHref={agentTabPath(agentId, "whatsapp")} />
+        <div className="flex flex-1 flex-col items-center gap-4 px-5 pt-5 pb-5">
+          <ChatStarters onStart={send} disabled={isStreaming || loadingHistory} />
+          <p className="mt-2 text-center text-[11px] leading-5 text-muted-foreground">{he ? "מתחילים בבדיקה ובטיוטה. פנייה ללקוחות ושינויים בעסק — באישור שלך." : "Start with a review and a draft. Customer outreach and business changes need your approval."}</p>
         </div>
       )}
     </div>

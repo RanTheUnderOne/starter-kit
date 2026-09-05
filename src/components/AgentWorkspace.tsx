@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { isTransitional } from "@/lib/format";
 import { agentTabPath, parseAgentTab, tabsFor, type AgentTab } from "@/lib/dashboard-tabs";
-import { branding } from "@/config/branding";
+import { AlfiLogo } from "@/components/AlfiLogo";
 import type { CronJob, CronRun, MergedAgent, Role } from "@/lib/types";
 import { useWorkspace } from "@/components/WorkspaceProvider";
 import { useLocale } from "@/components/LocaleProvider";
@@ -62,8 +62,8 @@ export function AgentWorkspace({
 }) {
   const pathname = usePathname();
   const { setCurrentId, isStaff } = useWorkspace();
-  const { t } = useLocale();
-  const tabs = tabsFor(isStaff);
+  const { t, locale } = useLocale();
+  const tabs = tabsFor(isStaff).filter(tab => tab.id !== "whatsapp");
 
   // Deep-linking to an agent scopes the WorkspaceProvider to its workspace, so the fleet/switcher
   // and any workspace-derived UI stay in sync after a refresh or shared link.
@@ -157,32 +157,25 @@ export function AgentWorkspace({
       onChatTab={isChat}
       navigateToSession={navigateToSession}
     >
-      <div className="flex h-screen">
-        <aside className="hidden w-72 shrink-0 flex-col border-e border-white/10 bg-[#072f2e] text-[#f4fbf7] lg:flex [--accent:rgb(255_255_255_/_0.08)] [--accent-foreground:#fff] [--background:#072f2e] [--border:rgb(255_255_255_/_0.12)] [--card:#0b3b3a] [--foreground:#f4fbf7] [--input:rgb(255_255_255_/_0.14)] [--muted-foreground:rgb(244_251_247_/_0.58)] [--secondary:rgb(184_240_212_/_0.16)] [--secondary-foreground:#f4fbf7]">
+      <div className="alfi-workspace flex h-dvh">
+        <aside className="alfi-rail hidden w-64 shrink-0 flex-col text-foreground lg:flex">
           <div className="flex flex-col p-4 pb-3">
             <div className="flex items-center gap-2 px-2 py-1">
-              {branding.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={branding.logoUrl} alt="" className="h-6 w-6 rounded" />
-              ) : (
-                <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#b8f0d4] text-xs font-bold text-[#072f2e]">
-                  A
-                </span>
-              )}
-              <span className="truncate font-semibold tracking-tight">{branding.appName}</span>
+              <AlfiLogo />
             </div>
+            <p className="px-2 pt-3 text-xs text-muted-foreground">{t("brand.tagline")}</p>
 
-            <Link
+            {(isStaff || agents.length > 1) && <Link
               href="/dashboard"
-              className="mt-4 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+              className="mt-4 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
               {t("nav.back")}
-            </Link>
+            </Link>}
 
-            <div className="mt-3">
+            {(isStaff || agents.length > 1) && <div className="mt-3">
               <ActiveAgentSwitcher agents={agents} activeAgentId={agentId} currentTab={currentTab} />
-            </div>
+            </div>}
 
             <WorkspaceNav tabs={tabs} currentTab={currentTab} onSelect={selectTab} />
           </div>
@@ -190,28 +183,22 @@ export function AgentWorkspace({
           {/* The "Chats" thread list folds into this one rail on the Chat tab (no second sidebar).
               On other tabs a spacer keeps the account footer pinned to the bottom. */}
           {isChat ? (
-            <div className="flex min-h-0 flex-1 flex-col border-t border-white/10">
+            <div className="flex min-h-0 flex-1 flex-col border-t border-border">
               <ChatSidebar />
             </div>
           ) : (
             <div className="flex-1" />
           )}
 
-          <div className="space-y-3 border-t border-white/10 p-4">
-            <LanguageToggle tone="dark" />
+          <div className="space-y-3 border-t border-border p-4">
+            <LanguageToggle />
             <AccountMenu />
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-between gap-3 border-b border-teal-950/8 bg-white/70 px-4 py-2.5 backdrop-blur-md lg:hidden">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 text-sm font-medium text-teal-900/70"
-            >
-              <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-              <span className="truncate">{t("nav.back")}</span>
-            </Link>
+        <div className="alfi-main flex min-w-0 flex-1 flex-col">
+          <header className="flex items-center justify-between gap-3 border-b border-border bg-white/70 px-4 py-2.5 backdrop-blur-md lg:hidden">
+            <AlfiLogo className="[&>span]:text-2xl [&>svg]:size-7" />
             <div className="flex items-center gap-1.5">
               <LanguageToggle compact />
               <AccountMenu compact />
@@ -246,12 +233,12 @@ export function AgentWorkspace({
 
         <nav
           aria-label="Alfi"
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-teal-950/10 bg-white/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
         >
           <div className="flex">
             {tabs.map((tab) => {
               const Icon = TAB_ICONS[tab.id];
-              const isActive = currentTab === tab.id;
+              const isActive = (currentTab === tab.id || (tab.id === "business" && currentTab === "whatsapp"));
               return (
                 <button
                   key={tab.id}
@@ -260,11 +247,11 @@ export function AgentWorkspace({
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "flex min-w-0 flex-1 flex-col items-center gap-1 px-1 py-2.5 text-[10px] font-semibold tracking-wide",
-                    isActive ? "text-teal-900" : "text-teal-900/45"
+                    isActive ? "text-foreground" : "text-muted-foreground"
                   )}
                 >
                   <Icon className={cn("h-5 w-5", tab.id === "advanced" && "text-amber-700")} />
-                  <span className="max-w-full truncate">{t(tab.labelKey)}</span>
+                  <span className="max-w-full truncate">{tab.id === "schedules" ? (locale === "he" ? "עבודה קבועה" : "Routines") : t(tab.labelKey)}</span>
                 </button>
               );
             })}
@@ -284,12 +271,12 @@ function WorkspaceNav({
   currentTab: AgentTab;
   onSelect: (tab: AgentTab) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   return (
     <nav className="mt-5 flex flex-col gap-1">
       {tabs.map((tab) => {
         const Icon = TAB_ICONS[tab.id];
-        const isActive = currentTab === tab.id;
+        const isActive = (currentTab === tab.id || (tab.id === "business" && currentTab === "whatsapp"));
         const staffOnly = tab.id === "advanced";
         return (
           <button
@@ -298,14 +285,14 @@ function WorkspaceNav({
             onClick={() => onSelect(tab.id)}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
-              isActive && staffOnly && "bg-amber-500/20 text-amber-100",
-              isActive && !staffOnly && "bg-[#b8f0d4] text-[#072f2e]",
-              !isActive && "text-white/70 hover:bg-white/10 hover:text-white"
+              "alfi-nav-item flex items-center gap-3 rounded-xl px-3 py-3 text-start text-sm font-medium transition-colors",
+              isActive && staffOnly && "bg-secondary text-foreground",
+              isActive && !staffOnly && "bg-secondary text-foreground",
+              !isActive && "text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}
           >
             <Icon className="h-4 w-4" />
-            {t(tab.labelKey)}
+            {tab.id === "schedules" ? (locale === "he" ? "עבודה קבועה" : "Routines") : t(tab.labelKey)}
           </button>
         );
       })}

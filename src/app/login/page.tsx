@@ -11,6 +11,8 @@ import { publicSiteOrigin, safeNextPath } from "@/lib/site-url";
 import { toast } from "sonner";
 import { TalkToAlfiWhatsAppLink } from "@/components/TalkToAlfiWhatsAppLink";
 
+import { AlfiLogo } from "@/components/AlfiLogo";
+
 type Mode = "signin" | "signup" | "reset";
 
 const COPY: Record<Mode, { title: string; subtitle: string; cta: string; busy: string }> = {
@@ -118,10 +120,12 @@ export default function LoginPage() {
   const copy = COPY[mode];
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="space-y-1 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">{branding.appName}</h1>
+    <main className="alfi-login" dir="ltr">
+      <section className="alfi-login-form">
+        <AlfiLogo />
+        <div className="alfi-login-content space-y-7">
+        <div className="space-y-3">
+          <h1 className="text-[34px] font-medium tracking-tight">{copy.title}</h1>
           <p className="text-sm text-muted-foreground">{copy.subtitle}</p>
         </div>
 
@@ -210,7 +214,17 @@ export default function LoginPage() {
         <div className="flex justify-center pt-2">
           <TalkToAlfiWhatsAppLink />
         </div>
-      </div>
+        </div>
+        <p className="text-xs text-muted-foreground">Alfi · Your business, connected.</p>
+      </section>
+      <aside className="alfi-login-art" aria-label="Alfi business agent">
+        <p className="text-sm text-white/70">A little less busywork. A lot more possibility.</p>
+        <AlfiLogo className="alfi-art-logo" />
+        <div className="max-w-md">
+          <h2 className="text-4xl font-medium leading-[1.12] tracking-tight lg:text-5xl">Your business.<br />Working together.</h2>
+          <p className="mt-5 max-w-sm text-base leading-relaxed text-white/65">One place to chat, connect your tools, and put your agent to work.</p>
+        </div>
+      </aside>
     </main>
   );
 }

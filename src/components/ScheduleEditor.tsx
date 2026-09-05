@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useWorkspace } from "@/components/WorkspaceProvider";
 
 const PRESETS = [
   { value: "0 8 * * *", key: "schedules.daily8" as const },
@@ -35,11 +36,14 @@ export function ScheduleEditor({
   busy: boolean;
   onSave: (input: CronJobInput) => Promise<void>;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const { isStaff } = useWorkspace();
+  const he = locale === "he";
   const [name, setName] = useState("");
   const [schedule, setSchedule] = useState(PRESETS[1].value);
   const [prompt, setPrompt] = useState("");
-  const preset = PRESETS.some((item) => item.value === schedule) ? schedule : "custom";
+  const timed = schedule.match(/^(\d{1,2}) (\d{1,2}) \* \* (\*|0-4)$/);
+  const preset = PRESETS.some((item) => item.value === schedule) ? schedule : timed ? (timed[3] === "*" ? PRESETS[0].value : PRESETS[1].value) : "custom";
 
   useEffect(() => {
     if (!open) return;
@@ -57,8 +61,8 @@ export function ScheduleEditor({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="overflow-hidden border-teal-950/10 bg-[#fffdf8] sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{initial ? t("schedules.update") : t("schedules.create")}</DialogTitle>
-          <DialogDescription>Asia/Jerusalem</DialogDescription>
+          <DialogTitle>{initial?.id ? t("schedules.update") : t("schedules.create")}</DialogTitle>
+          <DialogDescription>{he ? "כל הזמנים לפי שעון ישראל." : "All times are in Israel time."}</DialogDescription>
         </DialogHeader>
         <div className="space-y-5 py-2">
           <div className="space-y-2">
@@ -83,11 +87,13 @@ export function ScheduleEditor({
               className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:ring-2 focus:ring-ring/30"
             >
               {PRESETS.map((item) => (
-                <option key={item.value} value={item.value}>{t(item.key)}</option>
+                <option key={item.value} value={item.value}>{item.value === "0 8 * * *" ? (he ? "כל יום" : "Every day") : item.value === "0 8 * * 0-4" ? (he ? "ימי ראשון–חמישי" : "Sunday–Thursday") : t(item.key)}</option>
               ))}
-              <option value="custom">{t("schedules.custom")}</option>
+              {(isStaff || preset === "custom") && <option value="custom">{t("schedules.custom")}</option>}
             </select>
-            {preset === "custom" && (
+            {timed && <div className="space-y-2"><Label htmlFor="schedule-time">{he ? "באיזו שעה?" : "At what time?"}</Label><Input id="schedule-time" type="time" dir="ltr" value={`${timed[2].padStart(2,"0")}:${timed[1].padStart(2,"0")}`} onChange={event => { const [hours,minutes] = event.target.value.split(":"); if (hours && minutes) setSchedule(`${Number(minutes)} ${Number(hours)} * * ${timed[3]}`); }} /></div>}
+            {preset === "custom" && !isStaff && <p className="text-xs text-muted-foreground">{he ? "התזמון הקיים יישמר. אפשר לבחור תזמון חדש מהרשימה." : "The existing schedule will be kept. Choose a preset to change it."}</p>}
+            {preset === "custom" && isStaff && (
               <Input
                 value={schedule}
                 onChange={(event) => setSchedule(event.target.value)}
@@ -120,4 +126,3 @@ export function ScheduleEditor({
     </Dialog>
   );
 }
-

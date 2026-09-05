@@ -6,6 +6,7 @@ import { Check, ChevronsUpDown, LogOut, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useWorkspace } from "@/components/WorkspaceProvider";
+import { useLocale } from "@/components/LocaleProvider";
 import { apiFetch } from "@/lib/api";
 import type { WorkspaceWithRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -37,7 +38,8 @@ import {
 // immediately re-pin the old workspace.
 export function AccountMenu({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
-  const { workspaces, current, setCurrentId, refresh, userEmail } = useWorkspace();
+  const { workspaces, current, setCurrentId, refresh, userEmail, isStaff } = useWorkspace();
+  const { locale } = useLocale();
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -92,7 +94,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 {initial}
               </span>
               {!compact && (
-                <span className="flex min-w-0 flex-col text-left">
+                <span className="flex min-w-0 flex-col text-start">
                   <span className="truncate text-sm">{userEmail}</span>
                   <span className="truncate text-xs text-muted-foreground">
                     {current?.name ?? "Select workspace"}
@@ -111,7 +113,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
             <span className="min-w-0 truncate">{userEmail}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+          {(isStaff || workspaces.length > 1) && <><DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
             Workspaces
           </DropdownMenuLabel>
           {workspaces.map((w) => (
@@ -120,14 +122,15 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
               {w.id === current?.id && <Check className="h-4 w-4" />}
             </DropdownMenuItem>
           ))}
-          <DropdownMenuItem onClick={() => setCreating(true)}>
+          </>}
+          {isStaff && <DropdownMenuItem onClick={() => setCreating(true)}>
             <Plus className="h-4 w-4" />
             New workspace
-          </DropdownMenuItem>
+          </DropdownMenuItem>}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
             <LogOut className="h-4 w-4" />
-            Log out
+            {locale === "he" ? "יציאה מהחשבון" : "Log out"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

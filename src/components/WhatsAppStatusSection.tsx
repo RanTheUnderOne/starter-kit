@@ -14,11 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { alfiWhatsAppTalkUrl, configuredAlfiWhatsAppDigits } from "@/lib/alfi-whatsapp-link";
 
-function connectionLabel(status: WhatsAppCustomerStatus["business"]["status"]) {
-  if (status === "connected") return "Connected";
-  if (status === "connecting") return "Connecting";
-  if (status === "failed" || status === "revoked") return "Disconnected";
-  return "Not connected";
+function connectionLabel(status: WhatsAppCustomerStatus["business"]["status"], he: boolean) {
+  if (status === "connected") return he ? "מחובר" : "Connected";
+  if (status === "connecting") return he ? "בתהליך חיבור" : "Connecting";
+  if (status === "failed" || status === "revoked") return he ? "החיבור נותק" : "Disconnected";
+  return he ? "עדיין לא מחובר" : "Not connected";
 }
 
 export function WhatsAppStatusSection({
@@ -28,7 +28,8 @@ export function WhatsAppStatusSection({
   agentId: string;
   role: Role;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const he = locale === "he";
   const { isStaff } = useWorkspace();
   const [status, setStatus] = useState<WhatsAppCustomerStatus | null>(null);
   const [busy, setBusy] = useState(false);
@@ -40,7 +41,7 @@ export function WhatsAppStatusSection({
       setStatus(next);
       setOwnerPhone(next.ownerChannel.ownerPhone ?? "");
     } catch (error) {
-      toast.error((error as Error).message || t("common.error"));
+      toast.error(t("common.error"));
     }
   }, [agentId, t]);
 
@@ -67,7 +68,7 @@ export function WhatsAppStatusSection({
       const { url } = await apiFetch<{ url: string }>(`/api/agents/${agentId}/whatsapp/setup`, { method: "POST" });
       window.location.assign(url);
     } catch (error) {
-      toast.error((error as Error).message || t("common.error"));
+      toast.error(t("common.error"));
       setBusy(false);
     }
   }
@@ -87,7 +88,7 @@ export function WhatsAppStatusSection({
       setStatus(next);
       setOwnerPhone(next.ownerChannel.ownerPhone ?? ownerPhone);
     } catch (error) {
-      toast.error((error as Error).message || t("common.error"));
+      toast.error(t("common.error"));
     } finally {
       setBusy(false);
     }
@@ -98,53 +99,53 @@ export function WhatsAppStatusSection({
   const url = alfiWhatsAppTalkUrl(configuredAlfiWhatsAppDigits(), t("chat.whatsappGreeting"));
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[24px] border border-teal-950/8 bg-white/70 p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#d9f5e8] text-teal-800">
+    <div className="alfi-channels grid gap-5 lg:grid-cols-2">
+      <section className="alfi-channel alfi-surface p-5 sm:p-7">
+        <div className="flex flex-col-reverse items-start gap-5">
+          <div className="flex flex-col items-start gap-4">
+            <span className="alfi-channel-icon">
               <MessageCircle className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-teal-950">{t("whatsappBusinessTitle")}</h2>
-              <p className="mt-1 text-sm leading-6 text-teal-950/55">{t("whatsappBusinessBody")}</p>
+              <h2 className="text-lg font-semibold text-foreground">{he ? "המספר של העסק" : "Your business number"}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{he ? "חבר את המספר שאליו הלקוחות שלך פונים, כדי ש-Alfi יוכל לעבוד עם הפניות של העסק." : "Connect the number your customers use so Alfi can work with your business inquiries."}</p>
             </div>
           </div>
           <Badge variant={business?.connected ? "success" : "warning"}>
-            {business ? connectionLabel(business.status) : t("common.loading")}
+            {business ? connectionLabel(business.status, he) : t("common.loading")}
           </Badge>
         </div>
         {business?.connected && business.displayNumber && (
-          <p className="mt-4 text-sm font-medium text-teal-950">{business.displayNumber}</p>
+          <p className="mt-4 text-sm font-medium text-foreground">{business.displayNumber}</p>
         )}
         {role === "admin" && (
           <div className="mt-5 flex flex-wrap gap-2">
             {business?.canSetup && (
-              <Button className="rounded-full bg-teal-900 text-white hover:bg-teal-800" onClick={connect} disabled={busy}>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={connect} disabled={busy}>
                 {t("whatsappBusinessTitle")}
               </Button>
             )}
             {business?.connected && (
               <Button variant="outline" className="rounded-full" onClick={() => setConfirmRevoke(true)}>
-                {t("common.delete")}
+                {he ? "ניתוק המספר העסקי" : "Disconnect business number"}
               </Button>
             )}
           </div>
         )}
       </section>
 
-      <section className="rounded-[24px] border border-teal-950/8 bg-white/70 p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#d9f5e8] text-teal-800">
+      <section className="alfi-channel alfi-surface p-5 sm:p-7">
+        <div className="flex flex-col-reverse items-start gap-5">
+          <div className="flex flex-col items-start gap-4">
+            <span className="alfi-channel-icon">
               <MessageCircle className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-teal-950">{t("whatsappOwnerTitle")}</h2>
-              <p className="mt-1 text-sm leading-6 text-teal-950/55">{t("whatsappOwnerBody")}</p>
+              <h2 className="text-lg font-semibold text-foreground">{he ? "הקו הפרטי שלך עם Alfi" : "Your private line to Alfi"}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{he ? "דבר עם Alfi מהטלפון שלך. המספר האישי מזהה אותך כבעל העסק ונפרד מערוץ הלקוחות." : "Talk to Alfi from your phone. Your personal number identifies you as the owner, separately from the customer channel."}</p>
             </div>
           </div>
-          <Badge variant={owner?.ready ? "success" : "warning"}>{owner?.ready ? "Ready" : "Not ready"}</Badge>
+          <Badge variant={owner?.ready ? "success" : "warning"}>{!status ? t("common.loading") : owner?.ready ? (he ? "אפשר לדבר" : "Ready to talk") : (he ? "נדרשת הגדרה" : "Setup needed")}</Badge>
         </div>
         {role === "admin" && (
           <div className="mt-5 space-y-2">
@@ -153,6 +154,7 @@ export function WhatsAppStatusSection({
               <Input
                 id="shared-owner-phone"
                 type="tel"
+                dir="ltr"
                 inputMode="tel"
                 autoComplete="tel"
                 placeholder="972501234567"
@@ -177,16 +179,16 @@ export function WhatsAppStatusSection({
           </a>
         )}
         {isStaff && status && !owner?.ready && (
-          <p className="mt-4 text-xs text-teal-950/45">Owner routing is not confirmed ready.</p>
+          <p className="mt-4 text-xs text-foreground/45">Owner routing is not confirmed ready.</p>
         )}
       </section>
 
       <ConfirmDialog
         open={confirmRevoke}
         onOpenChange={setConfirmRevoke}
-        title={t("whatsappBusinessTitle")}
-        description={t("whatsappBusinessBody")}
-        confirmText={t("common.delete")}
+        title={he ? "לנתק את המספר העסקי?" : "Disconnect your business number?"}
+        description={he ? "החיבור של Alfi לוואטסאפ העסקי יופסק. ניתן לחבר אותו שוב בהמשך." : "Alfi will be disconnected from your business WhatsApp. You can reconnect later."}
+        confirmText={he ? "ניתוק" : "Disconnect"}
         destructive
         onConfirm={revoke}
       />
