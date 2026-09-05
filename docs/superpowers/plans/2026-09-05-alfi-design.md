@@ -9,7 +9,7 @@ Architecture: Reuse the existing Next.js routes, authentication, state, translat
 - [x] Replace green branding with white, warm gray, charcoal text, and restrained borders.
 - [x] Update sign-in, sidebar navigation, chat welcome, and panel styling. Preserve form and chat behavior.
 - [x] Verify TypeScript and production build; inspect output for responsive/accessibility issues. Production compilation and all 61 tests passed. Sign-in rendered at compact and desktop widths; HTTP 200.
-- [ ] Prepare a focused GitHub change containing only design files.
+- [x] Prepare a focused GitHub change containing only design files. Draft PR: https://github.com/RanTheUnderOne/starter-kit/pull/5
 
 Validation: Existing test suite, TypeScript, production compilation, and a rendered sign-in preview. Authentication and live agent execution require the deployment's configured services; do not substitute a fake authentication path.
 
