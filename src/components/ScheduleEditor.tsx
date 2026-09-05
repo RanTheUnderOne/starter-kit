@@ -55,7 +55,7 @@ export function ScheduleEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden border-teal-950/10 bg-[#fffdf8] sm:max-w-xl">
+      <DialogContent className="overflow-hidden sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{initial ? t("schedules.update") : t("schedules.create")}</DialogTitle>
           <DialogDescription>Asia/Jerusalem</DialogDescription>

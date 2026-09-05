@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, Settings, Users } from "lucide-react";
-import { branding } from "@/config/branding";
+import { AlfiLogo } from "@/components/AlfiLogo";
 import { AccountMenu } from "@/components/AccountMenu";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLocale } from "@/components/LocaleProvider";
@@ -26,21 +26,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-60 shrink-0 flex-col border-e bg-card p-4">
+    <div className="flex min-h-screen flex-col md:flex-row">
+      <aside className="flex w-full shrink-0 flex-col border-b bg-muted/60 p-5 md:w-60 md:border-b-0 md:border-e">
         <div className="flex items-center gap-2 px-2 py-1">
-          {branding.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={branding.logoUrl} alt="" className="h-6 w-6 rounded" />
-          ) : (
-            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#d9f5e8] text-xs font-bold text-teal-900">
-              A
-            </span>
-          )}
-          <span className="truncate font-semibold">{branding.appName}</span>
+          <AlfiLogo compact />
         </div>
 
-        <nav className="mt-6 flex flex-col gap-1">
+        <nav className="mt-6 flex flex-row flex-wrap gap-1 md:flex-col">
           {nav.map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             const Icon = item.icon;
@@ -48,6 +40,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
                   active ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -60,14 +53,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="mt-auto space-y-3 border-t pt-3">
+        <div className="mt-6 flex items-center gap-3 border-t pt-3 md:mt-auto md:block md:space-y-3">
           <LanguageToggle />
           <AccountMenu />
         </div>
       </aside>
 
       <main className="min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-7xl p-4 md:p-6">{children}</div>
+        <div className="mx-auto w-full max-w-7xl p-6 md:p-10">{children}</div>
       </main>
     </div>
   );

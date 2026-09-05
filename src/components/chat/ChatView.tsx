@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import { AlfiMark } from "@/components/AlfiLogo";
 import { Loader2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropOverlay } from "@/components/DropOverlay";
@@ -133,9 +134,10 @@ export function ChatView() {
         ) : messages.length > 0 ? (
           <ChatMessages messages={messages} isStreaming={isStreaming} />
         ) : (
-          <div className="max-w-xl text-center">
-            <p className="text-[11px] font-bold tracking-[0.2em] text-teal-700">{t("chat.eyebrow")}</p>
-            <h1 className="mt-3 text-[26px] font-semibold tracking-tight text-teal-950 sm:text-[32px]">
+          <div className="max-w-xl pb-3 text-center">
+            <AlfiMark className="mx-auto mb-6 size-12 text-foreground" />
+            <p className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground">{t("chat.eyebrow")}</p>
+            <h1 className="mt-3 text-[28px] font-medium tracking-tight text-foreground sm:text-[38px]">
               {t("chat.title")}
             </h1>
           </div>
