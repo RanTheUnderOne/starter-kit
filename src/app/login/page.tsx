@@ -11,6 +11,8 @@ import { publicSiteOrigin, safeNextPath } from "@/lib/site-url";
 import { toast } from "sonner";
 import { TalkToAlfiWhatsAppLink } from "@/components/TalkToAlfiWhatsAppLink";
 import { AlfiLogo } from "@/components/AlfiLogo";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLocale } from "@/components/LocaleProvider";
 
 type Mode = "signin" | "signup" | "reset";
 
@@ -21,6 +23,7 @@ const COPY: Record<Mode, { title: string; subtitle: string; cta: string; busy: s
 };
 
 export default function LoginPage() {
+  const { t } = useLocale();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -121,7 +124,10 @@ export default function LoginPage() {
   return (
     <main className="alfi-login">
       <section className="alfi-login-form">
-        <AlfiLogo />
+        <div className="flex items-center justify-between gap-3">
+          <AlfiLogo />
+          <LanguageToggle />
+        </div>
         <div className="alfi-login-content space-y-7">
         <div className="space-y-3">
           <h1 className="text-[34px] font-medium tracking-tight">{copy.title}</h1>
@@ -214,14 +220,14 @@ export default function LoginPage() {
           <TalkToAlfiWhatsAppLink />
         </div>
         </div>
-        <p className="text-xs text-muted-foreground">Alfi · Your business, connected.</p>
+        <p className="text-xs text-muted-foreground">{t("brand.tagline")}</p>
       </section>
-      <aside className="alfi-login-art" aria-label="Alfi business agent">
-        <p className="text-sm text-white/70">A little less busywork. A lot more possibility.</p>
+      <aside className="alfi-login-art" aria-label={t("login.artLabel")}>
+        <p className="text-sm text-white/70">{t("login.artEyebrow")}</p>
         <AlfiLogo className="alfi-art-logo text-white" />
         <div className="max-w-md">
-          <h2 className="text-4xl font-medium leading-[1.12] tracking-tight lg:text-5xl">Your business.<br />Working together.</h2>
-          <p className="mt-5 max-w-sm text-base leading-relaxed text-white/65">One place to chat, connect your tools, and put your agent to work.</p>
+          <h2 className="text-4xl font-medium leading-[1.12] tracking-tight lg:text-5xl">{t("login.artTitle")}<br />{t("login.artTitleLine")}</h2>
+          <p className="mt-5 max-w-sm text-base leading-relaxed text-white/65">{t("login.artBody")}</p>
         </div>
       </aside>
     </main>

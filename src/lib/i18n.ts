@@ -3,6 +3,11 @@ export type Direction = "ltr" | "rtl";
 
 const en = {
   "brand.tagline": "Your business, moving forward",
+  "login.artLabel": "Alfi business agent",
+  "login.artEyebrow": "A little less busywork. A lot more possibility.",
+  "login.artTitle": "Your business.",
+  "login.artTitleLine": "Working together.",
+  "login.artBody": "One place to chat, connect your tools, and put your agent to work.",
   "nav.chat": "Alfi",
   "nav.schedules": "Schedules",
   "nav.whatsapp": "WhatsApp",
@@ -85,6 +90,11 @@ export type MessageKey = keyof typeof en;
 
 const he: Record<MessageKey, string> = {
   "brand.tagline": "העסק שלך, תמיד מתקדם",
+  "login.artLabel": "אלפי, העוזר העסקי",
+  "login.artEyebrow": "קצת פחות טרחה. הרבה יותר אפשרויות.",
+  "login.artTitle": "העסק שלך.",
+  "login.artTitleLine": "עובד יחד.",
+  "login.artBody": "מקום אחד לשיחה, לחיבור הכלים ולהפעלת העוזר.",
   "nav.chat": "אלפי",
   "nav.schedules": "משימות מתוזמנות",
   "nav.whatsapp": "וואטסאפ",

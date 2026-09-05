@@ -290,7 +290,7 @@ function WorkspaceNav({
             onClick={() => onSelect(tab.id)}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
+              "flex items-center gap-2 rounded-xl px-3 py-2 text-start text-sm font-medium transition-colors",
               isActive && staffOnly && "bg-amber-500/15 text-amber-950",
               isActive && !staffOnly && "bg-secondary text-foreground",
               !isActive && staffOnly && "text-amber-800 hover:bg-amber-500/10 hover:text-amber-950",
