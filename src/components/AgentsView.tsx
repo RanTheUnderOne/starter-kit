@@ -87,8 +87,8 @@ export function AgentsView() {
       {loading ? (
         <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
       ) : agents.length === 0 ? (
-        <div className="rounded-[28px] border border-dashed p-12 text-center">
-          <p className="text-sm font-medium text-teal-950">{t("fleet.empty")}</p>
+        <div className="rounded-xl border border-dashed p-12 text-center">
+          <p className="text-sm font-medium text-foreground">{t("fleet.empty")}</p>
           <p className="mt-1 text-sm text-muted-foreground">{t("fleet.emptyBody")}</p>
         </div>
       ) : isStaff ? (
@@ -99,12 +99,12 @@ export function AgentsView() {
             <Link
               key={agent.agent37_id}
               href={agentTabPath(agent.agent37_id, "chat")}
-              className="alfi-panel rounded-[28px] p-6 transition hover:border-teal-900/20"
+              className="alfi-panel rounded-xl p-6 transition hover:border-foreground/20"
             >
-              <h2 className="text-lg font-semibold text-teal-950">
+              <h2 className="text-lg font-semibold text-foreground">
                 {agent.name?.trim() || t("nav.chat")}
               </h2>
-              <p className="mt-2 text-sm text-teal-950/55">{t("fleet.open")}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{t("fleet.open")}</p>
             </Link>
           ))}
         </div>
